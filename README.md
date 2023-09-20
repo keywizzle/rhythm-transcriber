@@ -8,3 +8,5 @@ For VSCode:
 - Install the [C/C++ extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools) for VSCode.
 - Install a compiler ([MinGW example](https://code.visualstudio.com/docs/cpp/config-mingw))
 - Run/debug button in upper right, idk figure it out
+
+Unfortunately, it may only work on Windows at the moment until I figure out standard build tools.
