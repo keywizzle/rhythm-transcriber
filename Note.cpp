@@ -1,6 +1,5 @@
 #include "Note.h"
 #include "Config.h"
-#include "Transcriber.h"
 #include <iostream>
 #include <math.h>
 
@@ -84,15 +83,10 @@ namespace RhythmTranscriber
     /// NoteString
 
     NoteString::NoteString() {}
-    NoteString::NoteString(Note *notes, unsigned int offset)
+    NoteString::NoteString(Note *notes) { this->notes = notes; }
+    NoteString::NoteString(Note *notes, unsigned int length)
     {
         this->notes = notes;
-        this->offset = offset;
-    }
-    NoteString::NoteString(Note *notes, unsigned int offset, unsigned int length)
-    {
-        this->notes = notes;
-        this->offset = offset;
         this->length = length;
     }
     NoteString::NoteString(std::vector<Note> &notes)
@@ -110,7 +104,6 @@ namespace RhythmTranscriber
         // TODO: I don't know if this is needed
         notes = noteStr.notes;
         length = noteStr.length;
-        offset = noteStr.offset;
 
         return *this;
     }
@@ -121,7 +114,7 @@ namespace RhythmTranscriber
         // standard deviation at the same time
 
         /// Get average
-        durationSum = 0.f;
+        /* durationSum = 0.f;
         for (unsigned int i = 0; i < length; i++)
         {
             durationSum += (notes + i)->duration;
@@ -135,46 +128,21 @@ namespace RhythmTranscriber
             auto diff = (notes + i)->duration - durationAvg;
             sumDiffMean += diff * diff;
         }
-        durationSD = std::sqrt(sumDiffMean / length);
+        durationSD = std::sqrt(sumDiffMean / length); */
     }
 
-    unsigned int NoteString::findIndex(float timestamp)
-    {
-        /// Simple linear search. Maybe at some point we can implement a binary search of some sort
-        /// since timestamps are in order.
-        for (unsigned int i = 0; i < length; i++)
-        {
-            if (notes[i].timestamp == timestamp)
-                return i;
-        }
-        return -1; /// This wraps to max value for unsigned int
-    }
+    /// UniformNoteString_
 
-    std::string NoteString::str()
-    {
-        std::string str = "";
-        for (unsigned int i = 0; i < length; i++)
-        {
-            str += "- " + notes[i].str() + '\n';
-        }
-        str += "Duration average: " + std::to_string(durationAvg) + '\n' +
-               "Duration stanrdard deviation: " + std::to_string(durationSD) + '\n';
-        return str;
-    }
-
-    /// UniformNoteString
-
-    UniformNoteString UniformNoteString::operator=(const UniformNoteString &noteStr)
+    UniformNoteString_ UniformNoteString_::operator=(const UniformNoteString_ &noteStr)
     {
         // TODO: I don't know if this is needed
         notes = noteStr.notes;
         length = noteStr.length;
-        offset = noteStr.offset;
 
         return *this;
     }
 
-    float UniformNoteString::check_note(const Note &note)
+    float UniformNoteString_::check_note(const Note &note)
     {
         /// Check if this note is included in this array
         /// TODO: Check if address of `note` is between address of `this->notes` and address of
@@ -214,7 +182,7 @@ namespace RhythmTranscriber
         return divSum / length;
     }
 
-    float UniformNoteString::get_score()
+    float UniformNoteString_::get_score()
     {
         if (length < 2)
             return 1.f;
@@ -248,7 +216,7 @@ namespace RhythmTranscriber
         return totalSum / length;
     }
 
-    float UniformNoteString::compare(const UniformNoteString &noteStr)
+    float UniformNoteString_::compare(const UniformNoteString_ &noteStr)
     {
         float totalSum = 0.f;
         for (unsigned int i = 0; i < length; i++)
@@ -279,7 +247,7 @@ namespace RhythmTranscriber
     /// search doesn't go out of bounds.
     /// @param recursiveDepth Recursion depth. Recursive calls will be made in situations where its
     /// unsure whether a note is the same duration or not.
-    void UniformNoteString::search(unsigned int maxLength, unsigned int recursiveDepth)
+    void UniformNoteString_::search(unsigned int maxLength, unsigned int recursiveDepth)
     {
         for (unsigned int i = length; length <= maxLength; i++)
         {
@@ -310,38 +278,13 @@ namespace RhythmTranscriber
             std::cout << "note at timestamp " << std::to_string((notes + i)->timestamp)
                       << " doesnt fit well with val: " << std::to_string(val) << '\n';
 
-            UniformNoteString nextStr;
+            UniformNoteString_ nextStr;
             nextStr.notes = notes + i;
             nextStr.length = 1;
             nextStr.search(maxLength - i, recursiveDepth + 1);
 
             /// Compare strings
             /// There are many cases to cover in this comparison
-        }
-    }
-
-    void NoteStringContainer::init()
-    {
-        lengths.reserve(notesLen);
-
-        for (unsigned int i = 0; i < notesLen; i++)
-        {
-            lengths.push_back(std::vector<unsigned int>());
-
-            for (unsigned int j = i + 1; j < notesLen; j++)
-            {
-                // Current approach (no order testing):
-                // -If note has <0.5, add existing string and break
-                // -If note has <0.6, >0.5, push back current string but continue adding
-                // -Continue adding otherwise
-
-                // Possible approach (order testing)
-                // -For this we need to account for the fact that with the current approach, if a
-                // note gets a bad score as the second note in a string, it's possible if that note
-                // was further into the string, the score would be higher.
-
-
-            }
         }
     }
 }
