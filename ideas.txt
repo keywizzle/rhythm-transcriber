@@ -1,35 +1,48 @@
+Naming
+- TranscRhythm (get it? transcription + rhythm = transcrhythm)
+- Transcrithm
+
 Optimizations:
 - Make methods inline
 - Lower amount of allocations (ex: variable inside a loop to outside, or vice-versa)
+- Try to use stack allocated arrays instead of vectors
+    - Accessing heap is slow!!! We can implement some SSO-like functionality to cover edge cases
+- Create caches to avoid possible duplicated computations
 
 - Try to gather data about the notes that we can use to help assist in getting BPM
     - Diddles..?
-- Get BPM
-    - Try how often notes change from slow->fast or fast->slow
-        - Don't look at note strings, simply just compare each note to the very next note and if it's close to a multiple,
-          consider it a change.
-        - The duration of most changes should be close to a factor of the IBI (duration of beat)
-        - The longer the duration of the division is, the less accurate it becomes.
-            - Any time a duration of the division lasts longer than a beat at the correct BPM, the total duration of the 
-              division is less likely to be accurate due to more room for error from the human performer.
-- Now, instead of first trying to get note strings, do the "guess where the beat starts" thing with the BPM
-- Use these possible beat starts to help get note strings/rhythms
+
+- Add tests!!!!
+
+- BD 2017 has a few challenges:
+    - Split quintuplet, ie beat lies between two sixteenth note quintuplets
+    - 4 notes over 
+- The 3 beat multibeat would need a division of 120 over the entire thing 
 
 
-- When deciding note rhythm, instead of raw dist with BPM/rhythm complexity, also take into account what it does to the beat.
-    - For instance, Rhyhtm X 2022 break has weird situation where last note in a beat is at 3/4 of the beat, with a division
-      of 12/11. Adding 11/12 to 0.75 gives us a nice 1.667, so even though that division seems impossible, it lines up well.
-- The whole notion of deciding rhythm by dist with BPM/rhythm complexity (notes * beats) is naive. Lots of little note chunks
-  end with a note that ends up having a weird division because the next note is in a different beat with a different division.
+- Architecture:
+    - namespace Transcrithm
+        - AudioTranscriber: Transcribes audio data into notes with timestamps/durations. Gets additional data such as articulation/dynamic
+            - NoteTranscriber
+            - ArticulationTranscriber
+        - RhythmTranscriber
+            - BPMAnalyzer
+            - BeatAnalyzer
+            - NoteAnalyzer (or RhythmAnalyzer)
+        - Transcription: Holds data for a transcription, output of RhythmTranscriber
+            - Read/write from file
+        - Generic transcription config
+        - Generic transcribe function that combines AudioTranscriber and RhythmTranscriber
 
-
-Division changes:
-- Need algorithm for determining which notes are most likely the same division
-- We already have the ability to measure how well notes compare to each other in terms of raw duration, as well as how note
-  strings compare to other note strings, note strings compare to individual notes, etc.
-- We need to be able to test hypothetical strings easily, 
-
-
+Math:
+- Exp decay functions
+    - f(x) = e^(-(x/s)^p)
+        - Value for `s` to pass through (x0, y0): s = x0/pow(-ln(y0), 1/p)
+    - f(x) = s/((x-c)^p+s)
+        - `c` is the x coordinate to put the top of the curve, this is usually just 0
+        - Value for `s` to pass through (x0, y0): s = (y0*(x0-c)^p)/(1-y0)
+        - To allow for negative numbers with various values for `p`, put absolute value around `x`.
+        - Advantage: Doesn't need to use `pow`, can expand in code if exponent is integer, likely just 2
 
 External sources:
 https://www.ncbi.nlm.nih.gov/pmc/articles/PMC9682253/
@@ -49,3 +62,5 @@ Terminology:
 
 https://audioapartment.com/techniques-and-performance/what-is-quantization/
 "quantization": Snapping notes to rhythmic grid
+
+https://musescore.com/user/22847071/scores/8282510
