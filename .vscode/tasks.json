@@ -7,11 +7,11 @@
       "args": [
         "-fdiagnostics-color=always",
         "-g",
-        /* "${file}", */
         "${fileDirname}\\transcription\\**.cpp",
+        /* "${fileDirname}\\tests\\**.cpp", */
         "${fileDirname}\\**.cpp",
+        /* "-Ofast", */ /* Some black magic optimizations, probably won't work when compiled to Wasm */
         "-o",
-        /* "${fileDirname}\\${fileBasenameNoExtension}.exe" */
         "${fileDirname}\\Transcriber.exe"
       ],
       "options": {
