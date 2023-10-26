@@ -1,1 +1,559 @@
-{"notes":[{"timestamp":5.184000015258789,"hand":1,"articulation":3,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":5.2773332595825195,"hand":2,"articulation":1,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":5.3493332862854,"hand":1,"articulation":1,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":5.413333415985107,"hand":1,"articulation":1,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":5.482666492462158,"hand":2,"articulation":1,"placement":1,"rhythm":{"notes":2,"beats":1}},{"timestamp":5.642666816711426,"placement":1,"rhythm":{"notes":1,"beats":1}},{"timestamp":5.957333564758301,"placement":1,"rhythm":{"notes":1,"beats":1}},{"timestamp":6.311375141143799,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":6.386666774749756,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":6.464000225067139,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":6.535999774932861,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":6.60533332824707,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":6.679999828338623,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":6.762666702270508,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":6.8373332023620605,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":6.909333229064941,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":6.989333152770996,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":7.074666500091553,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":7.146666526794434,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":7.226666450500488,"placement":1,"rhythm":{"notes":2,"beats":1}},{"timestamp":7.400000095367432,"placement":1,"rhythm":{"notes":2,"beats":1}},{"timestamp":7.552000045776367,"placement":1,"rhythm":{"notes":2,"beats":1}},{"timestamp":7.725333213806152,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":7.802666664123535,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":7.872000217437744,"placement":1,"rhythm":{"notes":2,"beats":1}},{"timestamp":8.034667015075684,"placement":1,"rhythm":{"notes":2,"beats":1}},{"timestamp":8.21066665649414,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":8.285333633422852,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":8.365333557128906,"placement":1,"rhythm":{"notes":2,"beats":1}},{"timestamp":8.503999710083008,"placement":1,"rhythm":{"notes":2,"beats":1}},{"timestamp":8.709333419799805,"placement":1,"rhythm":{"notes":3,"beats":1}},{"timestamp":8.826666831970215,"placement":1,"rhythm":{"notes":6,"beats":1}},{"timestamp":8.874666213989258,"placement":1,"rhythm":{"notes":6,"beats":1}},{"timestamp":8.922666549682617,"placement":1,"rhythm":{"notes":6,"beats":1}},{"timestamp":8.970666885375977,"placement":1,"rhythm":{"notes":6,"beats":1}},{"timestamp":9.01533317565918,"placement":1,"rhythm":{"notes":3,"beats":1}},{"timestamp":9.112000465393066,"placement":1,"rhythm":{"notes":6,"beats":1}},{"timestamp":9.170666694641113,"placement":1,"rhythm":{"notes":6,"beats":1}},{"timestamp":9.221333503723145,"placement":1,"rhythm":{"notes":6,"beats":1}},{"timestamp":9.27733325958252,"placement":1,"rhythm":{"notes":6,"beats":1}},{"timestamp":9.34666633605957,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":9.498666763305664,"placement":1,"rhythm":{"notes":2,"beats":1}},{"timestamp":9.826666831970215,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":9.89799976348877,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":9.97599983215332,"placement":1,"rhythm":{"notes":2,"beats":1}},{"timestamp":10.133333206176758,"placement":1,"rhythm":{"notes":2,"beats":1}},{"timestamp":10.295999526977539,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":10.362667083740234,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":10.4399995803833,"placement":1,"rhythm":{"notes":2,"beats":1}},{"timestamp":10.613875389099121,"placement":1,"rhythm":{"notes":2,"beats":1}},{"timestamp":10.773333549499512,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":10.871999740600586,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":10.95199966430664,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":11.02400016784668,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":11.101333618164063,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":11.192000389099121,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":11.269332885742188,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":11.333333015441895,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":11.402667045593262,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":11.479999542236328,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":11.562000274658203,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":11.67199993133545,"placement":1,"rhythm":{"notes":6,"beats":1}},{"timestamp":11.717333793640137,"placement":1,"rhythm":{"notes":6,"beats":1}},{"timestamp":11.767999649047852,"placement":1,"rhythm":{"notes":6,"beats":1}},{"timestamp":11.815999984741211,"placement":1,"rhythm":{"notes":6,"beats":1}},{"timestamp":11.869333267211914,"placement":1,"rhythm":{"notes":6,"beats":1}},{"timestamp":11.920000076293945,"placement":1,"rhythm":{"notes":6,"beats":1}},{"timestamp":11.973333358764648,"placement":1,"rhythm":{"notes":6,"beats":1}},{"timestamp":12.01866626739502,"placement":1,"rhythm":{"notes":6,"beats":1}},{"timestamp":12.074666976928711,"placement":1,"rhythm":{"notes":6,"beats":1}},{"timestamp":12.128000259399414,"placement":1,"rhythm":{"notes":6,"beats":1}},{"timestamp":12.186666488647461,"placement":1,"rhythm":{"notes":2,"beats":1}},{"timestamp":12.357999801635742,"placement":1,"rhythm":{"notes":2,"beats":1}},{"timestamp":12.517333030700684,"placement":1,"rhythm":{"notes":2,"beats":1}},{"timestamp":12.659333229064941,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":12.746000289916992,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":12.835000038146973,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":12.901333808898926,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":12.98133373260498,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":13.050666809082031,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":13.119999885559082,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":13.208000183105469,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":13.290666580200195,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":13.357333183288574,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":13.442667007446289,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":13.53066635131836,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":13.600000381469727,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":13.666666984558105,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":13.7568359375,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":13.845333099365234,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":13.920000076293945,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":14.002216339111328,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":14.082666397094727,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":14.162666320800781,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":14.244745254516602,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":14.325333595275879,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":14.397333145141602,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":14.472000122070313,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":14.554666519165039,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":14.640000343322754,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":14.725506782531738,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":14.805333137512207,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":14.880000114440918,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":14.944000244140625,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":15.02400016784668,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":15.114666938781738,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":15.202666282653809,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":15.26866626739502,"placement":1,"rhythm":{"notes":4,"beats":1}},{"timestamp":15.35200023651123,"placement":1,"rhythm":{"notes":1,"beats":1}}]}
+{
+  "notes": [
+    {
+      "timestamp": 5.184000015258789,
+      "hand": 1,
+      "articulation": 3,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 5.2773332595825195,
+      "hand": 2,
+      "articulation": 1,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 5.3493332862854,
+      "hand": 1,
+      "articulation": 1,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 5.413333415985107,
+      "hand": 1,
+      "articulation": 1,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 5.482666492462158,
+      "hand": 2,
+      "articulation": 1,
+      "placement": 1,
+      "rhythm": { "notes": 2, "beats": 1 }
+    },
+    {
+      "timestamp": 5.642666816711426,
+      "placement": 1,
+      "rhythm": { "notes": 1, "beats": 1 }
+    },
+    {
+      "timestamp": 5.957333564758301,
+      "placement": 1,
+      "rhythm": { "notes": 1, "beats": 1 }
+    },
+    {
+      "timestamp": 6.311375141143799,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 6.386666774749756,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 6.464000225067139,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 6.535999774932861,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 6.60533332824707,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 6.679999828338623,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 6.762666702270508,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 6.8373332023620605,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 6.909333229064941,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 6.989333152770996,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 7.074666500091553,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 7.146666526794434,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 7.226666450500488,
+      "placement": 1,
+      "rhythm": { "notes": 2, "beats": 1 }
+    },
+    {
+      "timestamp": 7.400000095367432,
+      "placement": 1,
+      "rhythm": { "notes": 2, "beats": 1 }
+    },
+    {
+      "timestamp": 7.552000045776367,
+      "placement": 1,
+      "rhythm": { "notes": 2, "beats": 1 }
+    },
+    {
+      "timestamp": 7.725333213806152,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 7.802666664123535,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 7.872000217437744,
+      "placement": 1,
+      "rhythm": { "notes": 2, "beats": 1 }
+    },
+    {
+      "timestamp": 8.034667015075684,
+      "placement": 1,
+      "rhythm": { "notes": 2, "beats": 1 }
+    },
+    {
+      "timestamp": 8.21066665649414,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 8.285333633422852,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 8.365333557128906,
+      "placement": 1,
+      "rhythm": { "notes": 2, "beats": 1 }
+    },
+    {
+      "timestamp": 8.503999710083008,
+      "placement": 1,
+      "rhythm": { "notes": 2, "beats": 1 }
+    },
+    {
+      "timestamp": 8.709333419799805,
+      "placement": 1,
+      "rhythm": { "notes": 3, "beats": 1 }
+    },
+    {
+      "timestamp": 8.826666831970215,
+      "placement": 1,
+      "rhythm": { "notes": 6, "beats": 1 }
+    },
+    {
+      "timestamp": 8.874666213989258,
+      "placement": 1,
+      "rhythm": { "notes": 6, "beats": 1 }
+    },
+    {
+      "timestamp": 8.922666549682617,
+      "placement": 1,
+      "rhythm": { "notes": 6, "beats": 1 }
+    },
+    {
+      "timestamp": 8.970666885375977,
+      "placement": 1,
+      "rhythm": { "notes": 6, "beats": 1 }
+    },
+    {
+      "timestamp": 9.01533317565918,
+      "placement": 1,
+      "rhythm": { "notes": 3, "beats": 1 }
+    },
+    {
+      "timestamp": 9.112000465393066,
+      "placement": 1,
+      "rhythm": { "notes": 6, "beats": 1 }
+    },
+    {
+      "timestamp": 9.170666694641113,
+      "placement": 1,
+      "rhythm": { "notes": 6, "beats": 1 }
+    },
+    {
+      "timestamp": 9.221333503723145,
+      "placement": 1,
+      "rhythm": { "notes": 6, "beats": 1 }
+    },
+    {
+      "timestamp": 9.27733325958252,
+      "placement": 1,
+      "rhythm": { "notes": 6, "beats": 1 }
+    },
+    {
+      "timestamp": 9.34666633605957,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 9.498666763305664,
+      "placement": 1,
+      "rhythm": { "notes": 2, "beats": 1 }
+    },
+    {
+      "timestamp": 9.826666831970215,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 9.89799976348877,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 9.97599983215332,
+      "placement": 1,
+      "rhythm": { "notes": 2, "beats": 1 }
+    },
+    {
+      "timestamp": 10.133333206176758,
+      "placement": 1,
+      "rhythm": { "notes": 2, "beats": 1 }
+    },
+    {
+      "timestamp": 10.295999526977539,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 10.362667083740234,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 10.4399995803833,
+      "placement": 1,
+      "rhythm": { "notes": 2, "beats": 1 }
+    },
+    {
+      "timestamp": 10.613875389099121,
+      "placement": 1,
+      "rhythm": { "notes": 2, "beats": 1 }
+    },
+    {
+      "timestamp": 10.773333549499512,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 10.871999740600586,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 10.95199966430664,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 11.02400016784668,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 11.101333618164063,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 11.192000389099121,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 11.269332885742188,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 11.333333015441895,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 11.402667045593262,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 11.479999542236328,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 11.562000274658203,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 11.67199993133545,
+      "placement": 1,
+      "rhythm": { "notes": 6, "beats": 1 }
+    },
+    {
+      "timestamp": 11.717333793640137,
+      "placement": 1,
+      "rhythm": { "notes": 6, "beats": 1 }
+    },
+    {
+      "timestamp": 11.767999649047852,
+      "placement": 1,
+      "rhythm": { "notes": 6, "beats": 1 }
+    },
+    {
+      "timestamp": 11.815999984741211,
+      "placement": 1,
+      "rhythm": { "notes": 6, "beats": 1 }
+    },
+    {
+      "timestamp": 11.869333267211914,
+      "placement": 1,
+      "rhythm": { "notes": 6, "beats": 1 }
+    },
+    {
+      "timestamp": 11.920000076293945,
+      "placement": 1,
+      "rhythm": { "notes": 6, "beats": 1 }
+    },
+    {
+      "timestamp": 11.973333358764648,
+      "placement": 1,
+      "rhythm": { "notes": 6, "beats": 1 }
+    },
+    {
+      "timestamp": 12.01866626739502,
+      "placement": 1,
+      "rhythm": { "notes": 6, "beats": 1 }
+    },
+    {
+      "timestamp": 12.074666976928711,
+      "placement": 1,
+      "rhythm": { "notes": 6, "beats": 1 }
+    },
+    {
+      "timestamp": 12.128000259399414,
+      "placement": 1,
+      "rhythm": { "notes": 6, "beats": 1 }
+    },
+    {
+      "timestamp": 12.186666488647461,
+      "placement": 1,
+      "rhythm": { "notes": 2, "beats": 1 }
+    },
+    {
+      "timestamp": 12.357999801635742,
+      "placement": 1,
+      "rhythm": { "notes": 2, "beats": 1 }
+    },
+    {
+      "timestamp": 12.517333030700684,
+      "placement": 1,
+      "rhythm": { "notes": 2, "beats": 1 }
+    },
+    {
+      "timestamp": 12.659333229064941,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 12.746000289916992,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 12.835000038146973,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 12.901333808898926,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 12.98133373260498,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 13.050666809082031,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 13.119999885559082,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 13.208000183105469,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 13.290666580200195,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 13.357333183288574,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 13.442667007446289,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 13.53066635131836,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 13.600000381469727,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 13.666666984558105,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 13.7568359375,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 13.845333099365234,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 13.920000076293945,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 14.002216339111328,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 14.082666397094727,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 14.162666320800781,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 14.244745254516602,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 14.325333595275879,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 14.397333145141602,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 14.472000122070313,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 14.554666519165039,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 14.640000343322754,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 14.725506782531738,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 14.805333137512207,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 14.880000114440918,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 14.944000244140625,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 15.02400016784668,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 15.114666938781738,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 15.202666282653809,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 15.26866626739502,
+      "placement": 1,
+      "rhythm": { "notes": 4, "beats": 1 }
+    },
+    {
+      "timestamp": 15.35200023651123,
+      "placement": 1,
+      "rhythm": { "notes": 1, "beats": 1 }
+    }
+  ]
+}
