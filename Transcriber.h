@@ -3,38 +3,29 @@
 #include <vector>
 
 #include "Config.h"
-#include "Note.h"
-#include "Rhythm.h"
+#include "NoteString.h"
+#include "transcription/Transcription.h"
 
 namespace RhythmTranscriber
 {
     class Transcriber
     {
     public:
-        BaseRhythm baseRhythms[rhythmCount];
+        std::vector<BaseNote> notes;
 
-        std::vector<Note> notes;
+        std::vector<UniformNoteString> noteStrs;
 
-        void init_rhythms();
+        RhythmTranscriber::Transcription::Transcription transcription;
 
-        void create_notes(float *timestamps, unsigned int length);
-
-        void label_neighbor_ratios();
-
-        unsigned int get_note_string(unsigned int noteIndex, float bpm);
-
-        UniformNoteString get_uniform_note_str_at(unsigned int index);
-
-        /// @brief Does returning a local vector create a copy for whatever it's assigned to? Maybe
-        /// this is okay
-        /// @return
-        std::vector<UniformNoteString> get_uniform_note_strs();
-
-        void transcribe(float *timestamps, unsigned int length, float bpm);
+        void transcribe(float *timestamps, unsigned int length);
 
     private:
-        bool loadedRhythms = false;
+        void create_notes(float *timestamps, unsigned int length);
 
-        float initialBpm;
+        void create_note_strs();
+
+        void score_interpretations();
+
+        void try_bpm(float bpm);
     };
 }

@@ -1,14 +1,13 @@
 #include "Transcriber.h"
 #include "utils.h"
-#include <inttypes.h>
+#include <algorithm>
 #include <iostream>
 #include <math.h>
-#include <unordered_set>
+#include <numeric>
 #include <vector>
 
+#include "tests/tests.h"
 #include "transcription/TranscriptionFile.h"
-
-#include "rapidjson/document.h"
 
 float testTimestamps[] = {
     0.056,       0.1493333333, 0.2426666667, 0.3386666667, 0.432,        0.5253333333, 0.6186666667,
@@ -28,9 +27,11 @@ float testTimestamps[] = {
     8.68,        8.805333333,  8.930666667};
 int testTimestampsLen = 101;
 
+const float uniformDeltaThreshold = 1.65f;
+
 inline bool is_uniform(float div1, float div2)
 {
-    return (div1 > div2 ? (div1 / div2) : (div2 / div1)) < 1.8;
+    return (div1 > div2 ? (div1 / div2) : (div2 / div1)) < uniformDeltaThreshold;
 }
 
 struct DivisionString
@@ -42,129 +43,53 @@ struct DivisionString
     unsigned int notesLen = 0;
 };
 
-std::vector<float> get_partials(float maxDivision, float maxProduct)
+struct NoteStringInterpretation
 {
-    std::unordered_set<float> partialSet;
-    std::vector<float> partialVec;
-
-    for (unsigned int i = 1; i <= maxDivision; i++)
+    struct BeatRatio
     {
-        // complexities.emplace((float)notes / (float)beats).second
-        float basePartial = 1.f / i;
-        float partial = 0.f;
-        for (unsigned int multiplier = 1; partial <= maxProduct; multiplier++)
-        {
-            // std::cout << "partial: " << std::to_string(partial) << '\n';
-            partial = basePartial * multiplier;
-            if (partial > maxProduct)
-                break;
-            if (partialSet.emplace(partial).second)
-            {
-                partialVec.push_back(partial);
-            }
-        }
-    }
+        float antecedent = 0.f;
+        float consequent = 0.f;
+        float quotient = 0.f;
+    };
 
-    return partialVec;
-}
+    /// @brief How much of a beat the interpretation represents
+    BeatRatio ratio = BeatRatio{0.f, 0.f, 0.f};
 
-void bpm_test(std::vector<float> &timestamps)
-{
-    std::vector<DivisionString> divisions;
+    /// @brief How much of a beat each note represents
+    BeatRatio noteRatio = BeatRatio{0.f, 0.f, 0.f};
 
-    float divisionLen = 0.f;
-    unsigned int notesLen = 0;
-    float *divisionTimestamp = &(timestamps.at(0));
-    for (unsigned int i = 0; i < timestamps.size() - 2; i++)
-    {
-        float timestamp = timestamps.at(i);
-        float nextTimestamp = timestamps.at(i + 1);
-
-        float duration = nextTimestamp - timestamp;
-        float nextDuration = timestamps.at(i + 2) - nextTimestamp;
-
-        divisionLen += duration;
-        notesLen++;
-
-        if (!is_uniform(duration, nextDuration) || i == timestamps.size() - 3)
-        {
-            divisions.push_back(DivisionString{divisionTimestamp, divisionLen, notesLen});
-            divisionTimestamp = &(timestamps.at(i + 1));
-            divisionLen = 0.f;
-            notesLen = 0;
-        }
-    }
-
-    auto partials = get_partials(6, 5.5f);
-    auto partialCount = partials.size();
-
-    std::vector<std::vector<float>> partialBpms;
-
-    for (unsigned int i = 0; i < divisions.size(); i++)
-    {
-        float divisionDuration = divisions.at(i).duration;
-        std::vector<float> bpms;
-        bpms.reserve(partialCount);
-        for (unsigned int j = 0; j < partialCount; j++)
-        {
-            auto thing = divisionDuration / partials.at(j);
-            bpms.push_back(60 / thing);
-        }
-        partialBpms.push_back(bpms);
-    }
-
-    float testBpm = 160.f;
-
-    for (unsigned int i = 0; i < partialBpms.size(); i++)
-    {
-        auto bpms = partialBpms.at(i);
-
-        float bestScore = 0.f;
-        unsigned int bestIndex = -1;
-        for (unsigned int j = 0; j < bpms.size(); j++)
-        {
-            float bpm = bpms.at(j);
-
-            if (bpm > RhythmTranscriber::maxBPM || bpm < RhythmTranscriber::minBPM)
-            {
-                continue;
-            }
-
-            // Store top scores, then when you have all of them go back and pick from each top set
-            // of scores the best one which also fits with surrounding divisions
-            // Ex: If previous and next interpretation is 0.666 and top two scores are 0.25 and
-            // 0.333, 0.333 would make more sense to fit the triplet-ish phrase
-
-            float tempScore = 1 / (std::abs(bpm - testBpm) + j);
-            std::cout << "\tbpm: " << std::to_string(bpm)
-                      << ", partial: " << std::to_string(partials.at(j))
-                      << ", tempScore: " << std::to_string(tempScore) << '\n';
-            if (tempScore > bestScore)
-            {
-                bestScore = tempScore;
-                bestIndex = j;
-            }
-
-            /// Don't score single-longish notes as heavily
-            /// Humans suck at timing transition notes between phrases/note strings, and they also
-            /// tend to have very strange divisions.
-        }
-        std::cout << "best match for " << std::to_string(testBpm) << " at "
-                  << std::to_string(*divisions.at(i).pTimestamp) << ": "
-                  << std::to_string(partialBpms.at(i).at(bestIndex)) << " BPM for "
-                  << std::to_string(partials.at(bestIndex)) << '\n';
-    }
-}
+    /// @brief Beats-per-minute of the interpretation
+    float bpm = 0.f;
+};
 
 int main()
 {
-    float bpm = 164.f;
-
     using namespace RhythmTranscriber::Transcription;
 
-    std::string fileName = "bd 2017";
+    /* Transcription testTranscription;
+    std::vector<std::pair<float, NoteRhythm>> notes;
+    notes.push_back({0.f, NoteRhythm{0, 0}});
+    notes.push_back({1.f, NoteRhythm{0, 0}});
 
-    StartTimer();
+    for (auto i = 0; i < notes.size() - 1; i++)
+    {
+        testTranscription.notes.push_back(NoteElement{
+            .timestamp = notes[i].first,
+            .duration = notes[i + 1].first - notes[i].first,
+            .placement = NotePlacement::PLACEMENT_HEAD,
+            .rhythm = notes[i].second,
+        });
+    } */
+
+    RhythmTranscriber::run_tests();
+
+    return 0;
+
+    /* std::string fileName = "computer\\random bs 156"; */
+    std::string fileName = "rhythm X 2022";
+    /* std::string fileName = "bd 2017"; */
+    /* std::string fileName = "src jam"; */
+
     TranscriptionFile transcriptionFile = TranscriptionFile();
     auto transcription = transcriptionFile.read(".\\test data\\" + fileName + ".json");
     /* transcriptionFile.write(".\\test data\\" + fileName + ".json", transcription,
@@ -172,7 +97,6 @@ int main()
                                 TranscriptionFile::WriteOptions::Type::JSON, 1,
                                 TranscriptionFile::WriteOptions::Compression::OMIT_EMPTY_FIELDS});
     transcriptionFile.write(".\\test data\\" + fileName + ".transcription", transcription); */
-    StopTimer();
 
     std::vector<float> timestamps;
     for (unsigned int i = 0; i < transcription.notes.size(); i++)
@@ -182,14 +106,8 @@ int main()
         timestamps.push_back(transcription.notes.at(i).timestamp);
     }
 
-    /* for (unsigned int i = 0; i < testTimestampsLen; i++)
-    {
-        timestamps.push_back(testTimestamps[i]);
-    } */
-    bpm_test(timestamps);
-
-    /* RhythmTranscriber::Transcriber transcriber;
-    transcriber.transcribe(&(timestamps[0]), timestamps.size(), bpm); */
+    RhythmTranscriber::Transcriber transcriber;
+    transcriber.transcribe(&(timestamps[0]), timestamps.size());
 
     Sleep(5000);
 
