@@ -1,5 +1,7 @@
 #pragma once
 
+#include <array>
+
 // Contains config values
 
 namespace RhythmTranscriber
@@ -13,16 +15,29 @@ namespace RhythmTranscriber
     const unsigned char maxBeats = 4;
 
     /// @brief Maximum BPM to consider
-    const float maxBPM = 300.f;
+    const float maxBpm = 300.f;
     /// @brief Minimum BPM to consider
-    const float minBPM = 60.f;
+    const float minBpm = 60.f;
 
     /// @brief Number of rhythmsCalculated by finding number of unique multiples of notes and beats;
     /// for 16 and 4 it's 43
     const unsigned int rhythmCount = 43;
 
+    ///
+
     /// NoteStrings
+
+    /// @brief Maximum ratio between two note's durations to be considered uniform with each other.
+    const float uniformRatioThreshold = 1.5f;
+
+    const float maxNoteRatio = 9.f;
 
     /// @brief Max level of recursion for UniformNoteString to use for determining a note string.
     const unsigned int maxRecursiveDepth = 5;
+
+    const float beatThresholdMultiplier = 0.7f;
+
+    /// @brief When creating a new beat branch, this is the minimum amount of time that must pass
+    /// since the previous beat for one to be created.
+    const float minBeatBranchOffsetTime = 0.09f;
 }
