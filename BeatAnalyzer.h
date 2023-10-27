@@ -2,7 +2,7 @@
 
 #include "Beat.h"
 #include "BeatBranch.h"
-#include "NoteString.h"
+#include "Note.h"
 
 #include <iostream>
 #include <math.h>

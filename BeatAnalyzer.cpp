@@ -1,4 +1,5 @@
 #include "BeatAnalyzer.h"
+#include "Config.h"
 
 #include "utils.h"
 #include <iomanip>
