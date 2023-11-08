@@ -74,7 +74,7 @@ namespace RhythmTranscriber
 
         branch.length = maxDepth;
 
-        create_beat_branch2(notes, false, maxDepth);
+        create_beat_branch(notes, false, maxDepth);
 
         /* std::cout << "best branch: \n";
         for (unsigned int i = 0; i < bestBranch.length; i++)
@@ -156,7 +156,7 @@ namespace RhythmTranscriber
 
         branch.length = maxDepth;
 
-        create_beat_branch2(notes + noteIndex, false, maxDepth);
+        create_beat_branch(notes + noteIndex, false, maxDepth);
 
         /* for (unsigned int i = 0; i < maxDepth; i++)
         {
@@ -164,184 +164,8 @@ namespace RhythmTranscriber
         } */
     }
 
-    void BeatAnalyzer::create_beat_branch(BaseNote *startNote, unsigned int depth)
-    {
-        /// TODO:
-        /// - Maybe try using one function for onbeat/offbeat but with more args to specify shit.
-        ///   Maybe we can pass a reference to some BeatData which gives enough information to the
-        ///   function.
-        /// - Consider using iterators, using indexes makes it a bit weird when you have to convert
-        ///   from index->iterator and back all the time
-        /// - Optimize!!! I think this is already pretty fast for what it does but it needs to be
-        ///   optimized regardless.
-        ///     - Remove dataLens/siblings bullshit
-        ///     - Avoid extra conditional checks for offbeat branching (see comment)
-        ///     - Use stack-allocated branch
-
-        float minTime = startNote->timestamp + minBeatDuration;
-        float maxTime = startNote->timestamp + maxBeatDuration;
-
-        /* std::cout << "(onbeat) startNote: " << startNote->timestamp << ", minTime: " << minTime
-                  << ", maxTime: " << maxTime << '\n'; */
-
-        int startNoteIndex = startNote - notes;
-
-        unsigned int siblings = 0;
-
-        for (unsigned int i = startNoteIndex; i < notesLen - 1; i++)
-        {
-            float timestamp = (notes + i)->timestamp;
-
-            if (timestamp > maxTime)
-            {
-                break;
-            }
-
-            if (timestamp >= minTime)
-            {
-                branch.dataBuffer[this->maxDepth - depth] =
-                    BeatData{startNote, i - startNoteIndex, false, false};
-
-                siblings++;
-
-                if (depth > 1)
-                {
-                    create_beat_branch(notes + i, depth - 1);
-                }
-                else
-                {
-                    branch.create_beats();
-                }
-
-                /// if (nextTimestamp <= maxTime)
-                ///     create offbeat branch
-            }
-            /// else if (nextTimestamp >= minTime && nextTimestamp <= maxTime)
-            ///     create offbeat branch
-            /// We can also probably store data for next loop iteration that nextTimestamp is
-            /// valid/invalid
-
-            /// TODO: If duration of note is really short, skip the in-between possibility
-            /// I think there could be a way to know exactly what duration is too short based on
-            /// config variables
-            if ((notes + i)->duration < minBeatBranchOffsetTime)
-                continue;
-
-            if (timestamp >= minTime && timestamp <= maxTime)
-            {
-                branch.dataBuffer[this->maxDepth - depth] =
-                    BeatData{startNote, i - startNoteIndex + 1, false, true};
-
-                siblings++;
-
-                if (depth > 1)
-                {
-                    create_offbeat_branch(notes + i + 1, depth - 1);
-                }
-                else
-                {
-                    branch.create_beats();
-                }
-            }
-        }
-
-        if (siblings == 0)
-        {
-            /// This must mean that the second note was outside timestamp bounds, meaning the
-            /// next note definitely lasts longer than a quarter note.
-            // beats between timestamps: (second.timestamp - first.timestamp) / beatDuration
-            // Only count towards beatLen when the next note is reached
-        }
-
-        dataLens.at(this->maxDepth - depth) += siblings;
-    }
-
-    void BeatAnalyzer::create_offbeat_branch(BaseNote *startNote, unsigned int depth)
-    {
-        float minTime = (startNote - 1)->timestamp + minBeatDuration;
-        float maxTime = startNote->timestamp + maxBeatDuration;
-
-        /* std::cout << "(offbeat) startNote: " << startNote->timestamp << ", minTime: " << minTime
-                  << ", maxTime: " << maxTime << '\n'; */
-
-        int startNoteIndex = startNote - notes;
-
-        unsigned int siblings = 0;
-
-        for (unsigned int i = startNoteIndex; i < notesLen - 1; i++)
-        {
-            float timestamp = (notes + i)->timestamp;
-
-            if (timestamp > maxTime)
-            {
-                break;
-            }
-
-            if (timestamp >= minTime)
-            {
-                branch.dataBuffer[this->maxDepth - depth] =
-                    BeatData{startNote, i - startNoteIndex, true, false};
-
-                siblings++;
-
-                if (depth > 1)
-                {
-                    create_beat_branch(notes + i, depth - 1);
-                }
-                else
-                {
-                    branch.create_beats();
-                }
-
-                /// if (nextTimestamp <= maxTime)
-                ///     create offbeat branch
-            }
-            /// else if (nextTimestamp >= minTime && nextTimestamp <= maxTime)
-            ///     create offbeat branch
-            /// We can also probably store data for next loop iteration that nextTimestamp is
-            /// valid/invalid
-
-            /// TODO: If duration of note is really short, skip the in-between possibility
-            /// I think there could be a way to know exactly what duration is too short based on
-            /// config variables
-            if ((notes + i)->duration < minBeatBranchOffsetTime)
-                continue;
-
-            if (timestamp >= minTime && timestamp <= maxTime)
-            {
-                /// The chances the next floating point value greater than `timestamp` is out of
-                /// range of `minTime` and `maxTime` is basically impossible, so we create offbeat
-                /// branch.
-
-                branch.dataBuffer[this->maxDepth - depth] =
-                    BeatData{startNote, i - startNoteIndex + 1, true, true};
-
-                siblings++;
-
-                if (depth > 1)
-                {
-                    create_offbeat_branch(notes + i + 1, depth - 1);
-                }
-                else
-                {
-                    branch.create_beats();
-                }
-            }
-        }
-
-        if (siblings == 0)
-        {
-            /// This must mean that the second note was outside timestamp bounds, meaning the
-            /// next note definitely lasts longer than a quarter note.
-            // beats between timestamps: (second.timestamp - first.timestamp) / beatDuration
-            // Only count towards beatLen when the next note is reached
-        }
-
-        dataLens.at(this->maxDepth - depth) += siblings;
-    }
-
-    void BeatAnalyzer::create_beat_branch2(BaseNote *startNote, bool startsOffbeat,
-                                           unsigned int depth)
+    void BeatAnalyzer::create_beat_branch(BaseNote *startNote, bool startsOffbeat,
+                                          unsigned int depth)
     {
         float minTime = (startNote - startsOffbeat)->timestamp + minBeatDuration;
         float maxTime = startNote->timestamp + maxBeatDuration;
@@ -368,7 +192,7 @@ namespace RhythmTranscriber
 
                 if (depth > 1)
                 {
-                    create_beat_branch2(notes + i, false, depth - 1);
+                    create_beat_branch(notes + i, false, depth - 1);
                 }
                 else
                 {
@@ -419,7 +243,7 @@ namespace RhythmTranscriber
 
                 if (depth > 1)
                 {
-                    create_beat_branch2(notes + i + 1, true, depth - 1);
+                    create_beat_branch(notes + i + 1, true, depth - 1);
                 }
                 else
                 {

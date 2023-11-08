@@ -20,8 +20,10 @@ namespace RhythmTranscriber
         unsigned int maxDepth = 3;
 
         /// Treating `beatData` as a linear tree, represents the number of sibling nodes per child
-        /// level
+        /// level (TODO remove)
         std::vector<unsigned int> dataLens;
+
+        std::vector<Beat> beats;
 
         BeatBranch bestBranch;
         float bestBranchScore = 0.f;
@@ -39,8 +41,6 @@ namespace RhythmTranscriber
 
         BeatBranch branch;
 
-        void create_beat_branch2(BaseNote *startNote, bool startsOffbeat, unsigned int depth);
-        void create_beat_branch(BaseNote *startNote, unsigned int depth);
-        void create_offbeat_branch(BaseNote *startNote, unsigned int depth);
+        void create_beat_branch(BaseNote *startNote, bool startsOffbeat, unsigned int depth);
     };
 }
