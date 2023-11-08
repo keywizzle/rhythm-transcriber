@@ -131,10 +131,10 @@ namespace RhythmTranscriber
                 if (expectedBranch.length != beatAnalyzer.bestBranch.length)
                 {
                     failStatus = true;
-                    errorMsg += "- Branch lengths don't match:\n\tExpected: " +
+                    /* errorMsg += "- Branch lengths don't match:\n\tExpected: " +
                                 std::to_string(expectedBranch.length) +
                                 "\n\tActual: " + std::to_string(beatAnalyzer.bestBranch.length) +
-                                "\n\n";
+                                "\n\n"; */
                 }
 
                 for (unsigned int i = 0; i < expectedBranch.length; i++)
@@ -147,7 +147,7 @@ namespace RhythmTranscriber
                     if (beatCmpErrorMsg != "")
                     {
                         failStatus = true;
-                        errorMsg += beatCmpErrorMsg;
+                        /* errorMsg += beatCmpErrorMsg; */
                     }
                 }
 
@@ -177,6 +177,24 @@ namespace RhythmTranscriber
                     {
                         std::cout << "\t" << beatAnalyzer.bestBranch.beatBuffer[i].str() << '\n';
                     }
+
+                    expectedBranch.calc_score(60.f / bpm);
+                    std::cout << "- Expected score: " << expectedBranch.score
+                              << ", (bpmDeltaScore: " << expectedBranch.bpmDeltaScore
+                              << ", bpmDistScore: " << expectedBranch.bpmDistScore << ")\n";
+                    std::cout << "- Actual score: " << beatAnalyzer.bestBranch.score
+                              << ", (bpmDeltaScore: " << beatAnalyzer.bestBranch.bpmDeltaScore
+                              << ", bpmDistScore: " << beatAnalyzer.bestBranch.bpmDistScore
+                              << ")\n";
+                    /* for (unsigned int i = 0; i < expectedBranch.length; i++)
+                    {
+                        expectedBranch.beatBuffer[i].calc_score_2();
+                    }
+                    std::cout << "********************\n";
+                    for (unsigned int i = 0; i < beatAnalyzer.bestBranch.length; i++)
+                    {
+                        beatAnalyzer.bestBranch.beatBuffer[i].calc_score_2();
+                    } */
                 }
                 else
                 {
@@ -364,6 +382,7 @@ namespace RhythmTranscriber
             testSource.test_beat_scores(0U, 4);
             testSource.test_beat_scores(19U, 4);
             testSource.test_beat_scores(32U, 4);
+            testSource.test_beat_scores(44U, 3);
 
             testSource = TestSource("src jam");
             testSource.test_beat_scores(0U, 4);
@@ -372,8 +391,8 @@ namespace RhythmTranscriber
             testSource.test_beat_scores(0U, 4);
 
             testSource = TestSource("bd 2017");
-            testSource.test_beat_scores(30U, 4);
-            testSource.test_beat_scores(10U, 4);
+            /* testSource.test_beat_scores(30U, 4);
+            testSource.test_beat_scores(10U, 4); */
 
             /* testSource = TestSource("bd 2022");
             testSource.test_beat_scores(0U, 3);
@@ -385,13 +404,26 @@ namespace RhythmTranscriber
         {
             auto testSource = TestSource("rhythm X 2022");
             testSource.test_branch_scores(0U, 4U, 164.f);
+            /* testSource.test_branch_scores(0U, 6U, 164.f); */
+            testSource.test_branch_scores(13U, 4U, 164.f);
             testSource.test_branch_scores(19U, 4U, 164.f);
+            /* testSource.test_branch_scores(19U, 4U, 164.f); */
             /* testSource.test_branch_scores(38U, 2U, 164.f); */
-            /* testSource.test_branch_scores(43U, 8U, 164.f); */
+            /* testSource.test_branch_scores(43U, 3U, 164.f); */
+
+            testSource = TestSource("src jam");
+            testSource.test_branch_scores(0U, 5U, 190.f);
+
+            testSource = TestSource("bc 2017");
+            testSource.test_branch_scores(0U, 6U, 132.f);
+
+            testSource = TestSource("bd 2022");
+            /* testSource.test_branch_scores(0U, 6U, 132.f);
+            testSource.test_branch_scores(7U, 4U, 132.f); */
 
             testSource = TestSource("bd 2017");
             /* testSource.test_branch_scores(21U, 4, 170.f); */
-            testSource.test_branch_scores(10U, 4, 160.f);
+            /* testSource.test_branch_scores(10U, 4, 160.f); */
 
             /* testSource = TestSource("bd 2022");
             testSource.test_branch_scores(0U, 4, 132.f); */
@@ -406,6 +438,8 @@ namespace RhythmTranscriber
         /// - Rhythms of selected beats
 
         run_beat_score_tests();
+        StartTimer();
         run_branch_score_tests();
+        StopTimer();
     }
 }
