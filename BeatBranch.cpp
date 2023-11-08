@@ -61,6 +61,13 @@ namespace RhythmTranscriber
         /// integer from `noteLength` to `maxDivision`, we can have an array that has sorted
         /// division values that we can iterate through up to a maximum depth.
 
+        if (beatLength == 1 && dataBuffer[beatIndex].notes == beatBuffer[beatIndex].notes &&
+            dataBuffer[beatIndex].length == beatBuffer[beatIndex].notesLen)
+        {
+            /// Nice and cheesy little optimization here to avoid extra work.
+            return;
+        }
+
         Beat beat = Beat(dataBuffer[beatIndex].notes, noteLength);
 
         float bestScore = 0.f;
@@ -160,10 +167,23 @@ namespace RhythmTranscriber
         bpmDistScore = 0.f;
 
         float avgBeatScore = 0.f;
-        float avgBeatNoteScore = 0.f;
-        float avgBeatDivScore = 0.f;
 
-        unsigned int beatDivScoreCount = 0;
+        /// TODO: Maybe have a local BPM score: how well each beat fits with the local BPM.
+        /// This is similar to delta score, except look at further beats than only the neighboring
+        /// one.
+
+        /// Sometimes, a phrase of notes with a common division will choose a different
+        /// division between beats if the notes slightly speed up or slow down. For example, 1/8
+        /// notes switching to 1/7 notes the next beat. This wouldn't be a problem (in theory) if
+        /// the max depth was really high, because the incorrect division will cause chaos later
+        /// down the line and get a low score. For lower depths, we can use this score to fairly
+        /// confidently catch this type of thing.
+        /// Example: referenceBPM: ~132, beat of 1/8 notes at 118 BPM followed by beat of 1/7 notes
+        /// at 137 BPM
+        float beatNeighborRelationScore = 0.f;
+        float prevBaseDuration = beatBuffer[0].duration / beatBuffer[0].division.antecedent;
+
+        unsigned int beatDivScoreCount = beatBuffer[0].division.antecedent;
 
         for (unsigned int i = 0; i < length; i++)
         {
@@ -189,24 +209,32 @@ namespace RhythmTranscriber
             }
 
             avgBeatScore += beatBuffer[i].score;
-            avgBeatDivScore += beatBuffer[i].divisionScore;
-            avgBeatNoteScore += beatBuffer[i].noteScore;
+
+            auto baseDuration = beatBuffer[i].duration / beatBuffer[i].division.antecedent;
+
+            if (i > 0 &&
+                beatBuffer[i].division.antecedent != beatBuffer[i - 1].division.antecedent &&
+                std::abs(baseDuration - prevBaseDuration) < 0.05f)
+            {
+            }
+
+            prevBaseDuration = baseDuration;
         }
 
         bpmDeltaScore = length == 1 ? 1.f : bpmDeltaScore / (length - 1);
         bpmDistScore = bpmDistScore / length;
 
         /// Scale
-        bpmDeltaScore = 0.01f / (bpmDeltaScore * bpmDeltaScore + 0.01f);
+        /* bpmDeltaScore = 0.01f / (bpmDeltaScore * bpmDeltaScore + 0.01f); */
+        bpmDeltaScore = 0.02f / (bpmDeltaScore * bpmDeltaScore + 0.02f);
 
         bpmDistScore = 0.0625f / (bpmDistScore * bpmDistScore + 0.0625f);
 
         avgBeatScore /= length;
-        avgBeatDivScore /= length;
-        avgBeatNoteScore /= length;
 
         /* return 0.5 * bpmDeltaScore + 0.5 * bpmDistScore; */
-        return 0.375 * bpmDeltaScore + 0.375 * bpmDistScore + 0.25 * avgBeatScore;
+        /* return score = 0.375 * bpmDeltaScore + 0.375 * bpmDistScore + 0.25 * avgBeatScore; */
+        return score = 0.25f * bpmDeltaScore + 0.35f * bpmDistScore + 0.4f * avgBeatScore;
     }
 
     std::string BeatData::str()
