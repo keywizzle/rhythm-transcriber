@@ -8,8 +8,8 @@ namespace RhythmTranscriber
 
     extern unsigned int beatDivisions[];
 
-    const unsigned int branchBufferSize = 8;
-    /* const unsigned int branchBufferSize = 10; */
+    /* const unsigned int branchBufferSize = 8; */
+    const unsigned int branchBufferSize = 11;
 
     /* extern float beatDivisionScores[];
 
@@ -57,6 +57,8 @@ namespace RhythmTranscriber
 
         /// @brief Average score of the beats in `beatBuffer`.
         float beatAvgScore = 0.f;
+
+        float score = 0.f;
 
         void create_beats();
 
