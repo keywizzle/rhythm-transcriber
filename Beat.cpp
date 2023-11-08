@@ -73,6 +73,8 @@ namespace RhythmTranscriber
 
         if (division.antecedent > division.consequent)
         {
+            /// @note This may have to change if this beat has an empty trailing beat (antecedent >
+            /// 2 * consequent).
             newBeat.set_offset(division.antecedent - division.consequent, division.consequent);
         }
 
@@ -203,6 +205,8 @@ namespace RhythmTranscriber
         divisionScore = 0.f;
         noteScore = 0.f;
 
+        float distWeightSum = 0.f;
+
         unsigned int noteChangeCount = 0;
         unsigned int prevAntecedent = noteRatios[0].antecedent;
         unsigned int beatAntecedent = 0;
@@ -211,8 +215,19 @@ namespace RhythmTranscriber
         {
             auto antecedent = noteRatios[i].antecedent;
 
+            /// Dist score
+
             float scoreBase = noteRatios[i].partial / antecedent;
-            distScore += scoreBase > 1 ? 1.f / scoreBase : scoreBase;
+
+            /// Humans aren't as good at timing longer notes than they are shorter notes (I think),
+            /// unless the notes are repeated consecutively with a metronome.
+            /// Basically, longer notes leave more room for error, so make longer notes have
+            /// slightly less impact on overall dist score.
+            float noteDistWeight = 0.05f / ((notes + i)->duration * (notes + i)->duration + 0.05f);
+
+            distScore += noteDistWeight * (scoreBase > 1 ? 1.f / scoreBase : scoreBase);
+
+            distWeightSum += noteDistWeight;
 
             /// @todo Maybe have a "weak" division score that is based on *any* change in note
             /// division.
@@ -248,7 +263,8 @@ namespace RhythmTranscriber
         }
         /// Maybe multiply score by how even antecedent/consequent are with each other.
         /// Ex: 3/4 => score * 0.75
-        distScore /= notesLen;
+        /* distScore /= notesLen; */
+        distScore /= distWeightSum;
 
         noteScore /= notesLen;
 
@@ -308,8 +324,8 @@ namespace RhythmTranscriber
     std::string Beat::str()
     {
         std::string str =
-            "bpm: " +
-            std::to_string(60.f / duration) + /* ", notesLen: " + std::to_string(notesLen) + */
+            "bpm: " + std::to_string(60.f / duration) + " " + std::to_string(startTime) + "->" +
+            std::to_string(endTime) + /* ", notesLen: " + std::to_string(notesLen) + */
             (offset.antecedent == 0 ? ""
                                     : (", offset: " + std::to_string(offset.antecedent) + '/' +
                                        std::to_string(offset.consequent))) +

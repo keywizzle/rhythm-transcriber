@@ -145,6 +145,7 @@ namespace RhythmTranscriber
                     }
                 }
                 arr[i] = divisionFreq / i;
+                /* arr[i] = (float)i / divisionFreq; */
             }
             return arr;
         }
