@@ -57,10 +57,6 @@ namespace RhythmTranscriber
     void BeatBranch::interpret_division_string(unsigned int beatIndex, unsigned int beatLength,
                                                unsigned int noteLength)
     {
-        /// TODO: Max division should be a bit more dynamic. Instead of iterating through every
-        /// integer from `noteLength` to `maxDivision`, we can have an array that has sorted
-        /// division values that we can iterate through up to a maximum depth.
-
         if (beatLength == 1 && dataBuffer[beatIndex].notes == beatBuffer[beatIndex].notes &&
             dataBuffer[beatIndex].length == beatBuffer[beatIndex].notesLen)
         {
