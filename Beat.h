@@ -186,7 +186,7 @@ namespace RhythmTranscriber
     {
     public:
         /// @brief A context-dependent and more accurate form of `antecedent` if it wasn't an
-        /// integer. Specifically, it's the note's duration divided by the beat duration.
+        /// integer. Specifically, it's the note's duration divided by the beat's base duration.
         /// @note The reason such a simple calculation is stored here is because it's done
         /// automatically when note ratios are set, which can be reused when calculating score.
         /// @todo see if it's faster to just recalculate when getting score than having to set/get)
