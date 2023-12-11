@@ -66,37 +66,22 @@ int main()
 {
     using namespace RhythmTranscriber::Transcription;
 
-    /* Transcription testTranscription;
-    std::vector<std::pair<float, NoteRhythm>> notes;
-    notes.push_back({0.f, NoteRhythm{0, 0}});
-    notes.push_back({1.f, NoteRhythm{0, 0}});
-
-    for (auto i = 0; i < notes.size() - 1; i++)
-    {
-        testTranscription.notes.push_back(NoteElement{
-            .timestamp = notes[i].first,
-            .duration = notes[i + 1].first - notes[i].first,
-            .placement = NotePlacement::PLACEMENT_HEAD,
-            .rhythm = notes[i].second,
-        });
-    } */
-
     RhythmTranscriber::run_tests();
 
     return 0;
 
-    /* std::string fileName = "computer\\random bs 156"; */
-    std::string fileName = "rhythm X 2022";
-    /* std::string fileName = "bd 2017"; */
-    /* std::string fileName = "src jam"; */
+    std::string fileName = "computer\\3_5 beat pause offbeat";
+    float bpm = 120.f;
 
     TranscriptionFile transcriptionFile = TranscriptionFile();
     auto transcription = transcriptionFile.read(".\\test data\\" + fileName + ".json");
-    /* transcriptionFile.write(".\\test data\\" + fileName + ".json", transcription,
+    transcriptionFile.write(".\\test data\\" + fileName + ".json", transcription,
                             TranscriptionFile::WriteOptions{
                                 TranscriptionFile::WriteOptions::Type::JSON, 1,
                                 TranscriptionFile::WriteOptions::Compression::OMIT_EMPTY_FIELDS});
-    transcriptionFile.write(".\\test data\\" + fileName + ".transcription", transcription); */
+    transcriptionFile.write(".\\test data\\" + fileName + ".transcription", transcription);
+
+    return 0;
 
     std::vector<float> timestamps;
     for (unsigned int i = 0; i < transcription.notes.size(); i++)
@@ -106,8 +91,9 @@ int main()
         timestamps.push_back(transcription.notes.at(i).timestamp);
     }
 
-    RhythmTranscriber::Transcriber transcriber;
-    transcriber.transcribe(&(timestamps[0]), timestamps.size());
+    RhythmTranscriber::Transcriber transcriber =
+        RhythmTranscriber::Transcriber(&(timestamps[0]), timestamps.size());
+    transcriber.transcribe(bpm, 1);
 
     Sleep(5000);
 
