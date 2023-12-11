@@ -6,7 +6,8 @@
 
 namespace RhythmTranscriber
 {
-    extern unsigned int iters;
+    unsigned int iters = 0;
+
     /// Weight definition
     float divisionWeight = 0.2f;
     float noteWeight = 0.3f;

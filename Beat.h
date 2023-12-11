@@ -11,6 +11,8 @@
 
 namespace RhythmTranscriber
 {
+    extern unsigned int iters;
+
     namespace
     {
         /// Imagine having constexpr sine in the standard library.
