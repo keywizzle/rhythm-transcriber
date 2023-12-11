@@ -7,6 +7,26 @@
 #include "../utils.h"
 #include <iostream>
 
+std::string format_time(LONGLONG timeMicroseconds)
+{
+    std::string timeStr = "";
+
+    if (timeMicroseconds < 1000)
+    {
+        timeStr += std::to_string(timeMicroseconds) + " microseconds";
+    }
+    else if (timeMicroseconds < 1000000)
+    {
+        timeStr += std::to_string((double)timeMicroseconds / 1000) + " milliseconds";
+    }
+    else
+    {
+        timeStr += std::to_string((double)timeMicroseconds / 1000000) + " seconds";
+    }
+
+    return timeStr;
+}
+
 namespace RhythmTranscriber
 {
     namespace
@@ -537,6 +557,35 @@ namespace RhythmTranscriber
             testSource.test_branch_scores(0U, 8U, 125.f);
         }
 
+        LONGLONG run_benchmark_for(std::string source, float bpm, unsigned int startNoteIndex,
+                                   unsigned int depth)
+        {
+            auto testSource = TestSource(source);
+
+            StartTimer();
+
+            BeatAnalyzer beatAnalyzer;
+
+            beatAnalyzer.set_depth(8);
+            beatAnalyzer.set_bpm(bpm);
+
+            beatAnalyzer.notes = &(testSource.notes[0]);
+            beatAnalyzer.notesLen = testSource.notes.size();
+
+            beatAnalyzer.get_best_branch_at(0);
+
+            StopTimer(false);
+
+            auto elapsedTime = GetElapsedTime();
+
+            std::cout << "Time taken for source \"" << source << "\" (" << startNoteIndex << ", "
+                      << depth << "): " << format_time(elapsedTime) << '\n';
+            /* std::cout << "Iterations: " << RhythmTranscriber::iters << '\n';
+
+            RhythmTranscriber::iters = 0; */
+
+            return elapsedTime;
+        }
     }
 
     void run_tests()
@@ -547,4 +596,19 @@ namespace RhythmTranscriber
         StopTimer();
     }
 
+    void run_benchmarks()
+    {
+        LONGLONG totalTime = 0;
+
+        /// Default compile options, compiled to executable and run externally.
+
+        /// Average runtime (pre-optimization): 1.38 seconds
+        totalTime += run_benchmark_for("rhythm X 2022", 164.f, 0, 8);
+        /// Average runtime (pre-optimization): 2.89 seconds
+        totalTime += run_benchmark_for("computer\\rhythm X 2022", 164.f, 0, 8);
+        /// Average runtime (pre-optimization): 9.89 seconds
+        totalTime += run_benchmark_for("bd 2022", 125.f, 0, 8);
+
+        std::cout << "Total time taken for all benchmarks: " << format_time(totalTime) << '\n';
+    }
 }

@@ -66,8 +66,11 @@ int main()
 {
     using namespace RhythmTranscriber::Transcription;
 
-    RhythmTranscriber::run_tests();
+    /* RhythmTranscriber::run_tests(); */
 
+    RhythmTranscriber::run_benchmarks();
+
+    Sleep(50000);
     return 0;
 
     std::string fileName = "computer\\3_5 beat pause offbeat";
