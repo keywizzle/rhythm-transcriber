@@ -21,6 +21,11 @@ float score_test(unsigned int consequent)
 
 namespace RhythmTranscriber
 {
+    Transcriber::Transcriber(float *timestamps, unsigned int length)
+    {
+        create_notes(timestamps, length);
+    }
+
     void Transcriber::create_notes(float *timestamps, unsigned int length)
     {
         notes.reserve(length);
@@ -30,157 +35,85 @@ namespace RhythmTranscriber
                 RhythmTranscriber::BaseNote{timestamps[i], timestamps[i + 1] - timestamps[i]});
         }
         notes.push_back(RhythmTranscriber::BaseNote{timestamps[length - 1], -1.f});
-    }
-    void Transcriber::create_note_strs()
-    {
-        auto noteStr = UniformNoteString{&(notes.at(0)), notes.at(0).duration, 1};
 
-        /// Exclude last note since it won't have a duration
-        auto notesLen = notes.size() - 1;
-
-        for (unsigned int i = 1; i < notesLen; i++)
-        {
-            auto note = notes.at(i);
-
-            float duration = note.duration;
-
-            if (!noteStr.is_uniform(duration))
-            {
-                noteStrs.push_back(noteStr);
-                noteStrs.at(noteStrs.size() - 1).create_interpretations();
-
-                noteStr.notes = &(notes[i]);
-                noteStr.duration = duration;
-                noteStr.length = 1;
-            }
-            else
-            {
-                noteStr.duration += duration;
-                noteStr.length++;
-            }
-        }
-
-        /// Add last division string
-        noteStrs.push_back(noteStr);
-        noteStrs.at(noteStrs.size() - 1).create_interpretations();
-    }
-    void Transcriber::score_interpretations()
-    {
-        std::vector<UniformNoteString> sortedStrs = noteStrs;
-        std::sort(sortedStrs.begin(), sortedStrs.end(),
-                  [](UniformNoteString &noteStr1, UniformNoteString &noteStr2)
-                  {
-                      return noteStr1.interpretations.size() > noteStr2.interpretations.size();
-                      /* float score1 = noteStr1.get_score();
-                      float score2 = noteStr2.get_score();
-
-                      if (score1 == 1 && score2 != 1)
-                          return true;
-                      if (score1 != 1 && score2 == 1)
-                          return false;
-
-                      return score1 < score2; */
-                  });
-
-        auto noteStrLen = sortedStrs.size();
-        for (unsigned int i = 0; i < noteStrLen; i++)
-        {
-            auto noteStr = sortedStrs.at(i);
-            auto interpsLen = noteStr.interpretations.size();
-            std::cout << "note length: " << std::to_string(noteStr.length)
-                      << ", timestamp: " << noteStr.notes[0].timestamp
-                      << ", score: " << noteStr.get_score() << '\n';
-            for (unsigned int j = 0; j < interpsLen; j++)
-            {
-                /// Combined with the previous note string, this endBeatScore is a measure of how
-                /// well this interpretation fits with
-
-                auto interp = noteStr.interpretations.at(j);
-
-                auto beatScore = interp.get_beat_ratio_score();
-                auto noteScore = interp.get_note_ratio_score();
-
-                std::cout << "bpm: " + std::to_string(interp.bpm) +
-                                 ", ratio: " + std::to_string(interp.ratio.quotient) + " (" +
-                                 std::to_string(interp.ratio.antecedent) + '/' +
-                                 std::to_string(interp.ratio.consequent) +
-                                 "), note: " + std::to_string(interp.noteRatio.antecedent) + '/' +
-                                 std::to_string(interp.noteRatio.consequent) +
-                                 ", beat score: " + std::to_string(beatScore) +
-                                 ", note score: " + std::to_string(noteScore) + ", " +
-                                 std::to_string((beatScore + noteScore) / 2)
-                          << '\n';
-            }
-        }
+        beatAnalyzer.notes = &(notes[0]);
+        beatAnalyzer.notesLen = notes.size();
     }
 
-    void Transcriber::try_bpm(float bpm)
+    void Transcriber::transcribe()
     {
-        std::vector<Beat> beats;
-        float localBpm = 0.f;
-        for (unsigned int i = 0; i < noteStrs.size(); i++)
+        /// BPMAnalyzer stuff...
+
+        BeatAnalyzer beatAnalyzer;
+    }
+
+    void Transcriber::transcribe(float bpm)
+    {
+        beatAnalyzer.maxDepth = 4;
+        beatAnalyzer.bpm = bpm;
+    }
+
+    void Transcriber::transcribe(float bpm, unsigned int depth)
+    {
+        beatAnalyzer.set_bpm(bpm);
+        beatAnalyzer.set_depth(depth);
+
+        /// TODO: Have dynamic depth, basically take longer on trickier beats, maybe by looking at
+        /// score or something.
+
+        int beatCount = 0;
+
+        for (unsigned int i = 0; i < notes.size();)
         {
-            auto noteStr = noteStrs.at(i);
-            Beat beat;
+            /* std::cout << "getting best branch starting at " << notes[i].timestamp << '\n'; */
+            beatAnalyzer.get_best_branch_at(i);
 
-            auto interpretations = noteStr.interpretations;
+            unsigned int beatIndex = 0;
 
-            std::sort(
-                interpretations.begin(), interpretations.end(),
-                [localBpm](const RhythmTranscriber::UniformNoteString::Interpretation &interp1,
-                           const RhythmTranscriber::UniformNoteString::Interpretation &interp2)
-                { return std::abs(localBpm - interp1.bpm) < std::abs(localBpm - interp2.bpm); });
+            Beat beat = beatAnalyzer.bestBranch.beatBuffer[0];
+
+            add_beat(beat);
+
+            beatCount++;
+            std::cout << beat.str() << '\n';
+
+            i += beat.notesLen;
+
+            while (beat.division.antecedent > beat.division.consequent)
+            {
+                beatIndex++;
+
+                beat = beatAnalyzer.bestBranch.beatBuffer[beatIndex];
+                /* std::cout << "offset beat: " << beat.str() << '\n'; */
+
+                add_beat(beat);
+
+                beatCount++;
+
+                std::cout << beat.str() << '\n';
+
+                i += beat.notesLen;
+            }
+            if (beatCount >= 8)
+            {
+                break;
+            }
         }
+
+        /// Add last note as a quarter note (at least for now).
+        
+
+        /* for (unsigned int i = 0; i < transcription.notes.size(); i++)
+        {
+            std::cout << "Transcription note: " << transcription.notes[i].rhythm.beats << "/"
+                      << transcription.notes[i].rhythm.notes << '\n';
+        } */
     }
 
     void Transcriber::transcribe(float *timestamps, unsigned int length)
     {
         create_notes(timestamps, length);
 
-        /// It might be useful to detect and replace diddles to use with note strings
-
-        // create_note_strs();
-
-        // score_interpretations();
-
         BeatAnalyzer analyzer;
-        analyzer.analyze(&(notes[0]), notes.size());
-
-        /* std::vector<Beat> beats;
-float localBpm = 0.f;
-for (unsigned int i = 0; i < noteStrs.size(); i++)
-{
-    auto noteStr = noteStrs.at(i);
-    Beat beat;
-
-    auto interpretations = noteStr.interpretations;
-
-    std::sort(
-        interpretations.begin(), interpretations.end(),
-        [localBpm](const RhythmTranscriber::UniformNoteString::Interpretation &interp1,
-                   const RhythmTranscriber::UniformNoteString::Interpretation &interp2)
-        { return std::abs(localBpm - interp1.bpm) < std::abs(localBpm - interp2.bpm); });
-} */
-
-        /* for (unsigned int i = 0; i < noteStrs.size(); i++)
-        {
-            auto noteStr = noteStrs.at(i);
-            std::cout << "division str at " << std::to_string(noteStr.notes->timestamp)
-                      << " with note length " << std::to_string(noteStr.length)
-                      << " (score: " << noteStr.get_score() << "): \n";
-            for (unsigned int j = 0; j < noteStr.interpretations.size(); j++)
-            {
-                auto interp = noteStr.interpretations.at(j);
-
-                if (interp.noteRatio.consequent > RhythmTranscriber::maxNoteRatio)
-                    continue;
-
-                std::cout << "bpm: " << std::to_string(interp.bpm)
-                          << ", ratio: " << std::to_string(interp.ratio.quotient) << " ("
-                          << interp.ratio.antecedent << '/' << interp.ratio.consequent
-                          << "), note: " << interp.noteRatio.antecedent << '/'
-                          << interp.noteRatio.consequent << ", score: " << interp.score << '\n';
-            }
-        } */
     }
 }

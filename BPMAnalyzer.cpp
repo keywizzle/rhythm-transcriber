@@ -1,4 +1,5 @@
 #include "BPMAnalyzer.h"
+#include "Config.h"
 
 namespace RhythmTranscriber
 {
@@ -57,7 +58,7 @@ namespace RhythmTranscriber
             bpmIndex++;
         }
     }
-    
+
     float BPMAnalyzer::calc_beat_score(float duration, unsigned int noteIndex)
     {
         float nextDistToBeat, durationDiff;

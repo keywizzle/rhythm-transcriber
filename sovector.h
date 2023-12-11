@@ -2,7 +2,7 @@
 
 #include <vector>
 
-template <typename T, std::size_t stackSize = 16> class sovector
+template <typename T, const std::size_t stackSize = 16> class sovector
 {
 private:
     T stackData[stackSize];

@@ -16,51 +16,108 @@ namespace RhythmTranscriber
 
     unsigned int beatDivisionsSize = 21; */
 
-    void BeatBranch::create_beats()
+    bool BeatBranch::create_beats()
     {
-        /* for (unsigned int i = 0; i < length; i++)
-        {
-            std::cout << "data: " << dataBuffer[i].str() << '\n';
-        } */
-
         unsigned int divisionBeatLen = 0;
         unsigned int divisionNoteLen = 0;
 
+        unsigned int beatIndex = 0;
+
+        float recentDownbeatTime = dataBuffer[0].notes[0].timestamp;
+        unsigned int recentDownbeatIndex = 0;
+
+        bool shouldUpdate = false;
+
         for (unsigned int i = 0; i < length; i++)
         {
+            /// @todo See if it's faster to avoid copying to local variable.
             auto data = dataBuffer[i];
 
-            divisionNoteLen += data.length;
-            divisionBeatLen++;
+            if (data.needsUpdate)
+            {
+                shouldUpdate = true;
+            }
 
-            /// TODO: Handle if last beat in branch does not end on a downbeat. Since we're limited
-            /// by `maxDepth`, we can't use further notes to guess. The next downbeat is between the
-            /// last note and the note after the last note.
-            /// For now, we're omitting
+            if (data.length > 0 && data.notes[data.length - 1].duration > expectedBeatDuration * 2)
+            {
+                /// We may need to add more beats depending on where the long note falls into the
+                /// beat.
+
+                /// In testing, if the combined note duration is even slightly less than
+                /// `expectedBeatDuration`, it lowers the beat count by 1, which will give incorrect
+                /// results. Adding 0.25 shifts this threshold over to give a bit more room for
+                /// error.
+
+                divisionBeatLen +=
+                    (((data.notes[data.length - 1].timestamp - data.notes[0].timestamp) +
+                      data.notes[data.length - 1].duration) /
+                     expectedBeatDuration) +
+                    0.25f;
+            }
+            else
+            {
+                divisionBeatLen++;
+            }
+
+            divisionNoteLen += data.length;
 
             if (!data.endsOffbeat)
             {
-                interpret_division_string(i + 1 - divisionBeatLen, divisionBeatLen,
-                                          divisionNoteLen);
+                if (shouldUpdate)
+                {
+                    if (!create_beats_at(beatIndex, divisionBeatLen, divisionNoteLen))
+                    {
+                        return false;
+                    }
+
+                    set_updated(beatIndex, i - recentDownbeatIndex + 1);
+                    /* set_updated(beatIndex, divisionBeatLen); */
+
+                    shouldUpdate = false;
+                }
+
                 divisionBeatLen = 0;
                 divisionNoteLen = 0;
+
+                beatIndex = i + 1;
+
+                /// Avoid going out of bounds on the last index while also avoiding branching. It's
+                /// gooberish, I know. Maybe there's a better way to do it.
+                recentDownbeatTime = dataBuffer[i + 1 - (i == length - 1)].notes[0].timestamp;
+                recentDownbeatIndex = i + 1;
             }
         }
 
-        /* for (unsigned int i = 0; i < length; i++)
+        if (divisionBeatLen != 0)
         {
-            std::cout << "beat: " << beatBuffer[i].str() << '\n';
+            /// Branch ends on `divisionBeatLen` number of offbeats. Here, we try to figure out what
+            /// they are without using a downbeat note.
+
+            if (divisionBeatLen >= length)
+            {
+                /// No downbeat in this branch.
+                return false;
+            }
+
+            /// Local duration must be long enough to include all notes in `dataBuffer` at the
+            /// index. If it's too short, it will essentially round to the downbeat of the last
+            /// note.
+            float localDuration =
+                std::max(dataBuffer[length - divisionBeatLen].notes[divisionNoteLen - 1].timestamp -
+                             dataBuffer[length - 1].notes->timestamp,
+                         beatBuffer[length - divisionBeatLen - 1].get_duration());
+
+            return create_beats_at(length - divisionBeatLen, divisionBeatLen, divisionNoteLen,
+                                   dataBuffer[length - 1].notes->timestamp + localDuration -
+                                       dataBuffer[length - divisionBeatLen].notes->timestamp);
         }
-        std::cout << "****************************\n"; */
+
+        return true;
     }
 
-    void BeatBranch::interpret_division_string(unsigned int beatIndex, unsigned int beatLength,
-                                               unsigned int noteLength)
+    bool BeatBranch::create_beats_at(unsigned int beatIndex, unsigned int beatLength,
+                                     unsigned int noteLength)
     {
-        /// TODO: Max division should be a bit more dynamic. Instead of iterating through every
-        /// integer from `noteLength` to `maxDivision`, we can have an array that has sorted
-        /// division values that we can iterate through up to a maximum depth.
-
         Beat beat = Beat(dataBuffer[beatIndex].notes, noteLength);
 
         float bestScore = 0.f;
@@ -86,7 +143,11 @@ namespace RhythmTranscriber
                 continue;
             }
 
-            beat.set_note_ratios(division);
+            if (!beat.set_note_ratios(division))
+            {
+                /// Weren't able to correctly set note ratios based off of `division`.
+                continue;
+            }
 
             /// Since we may be using the beat as a combination of multiple beats, to get accurate
             /// scores we need to modify the division to be what it *would* be when the beats are
@@ -94,6 +155,8 @@ namespace RhythmTranscriber
             /// essentially reversing the multiplication of the division done earlier.
             beat.division.consequent /= beatLength;
 
+            /// We should really be scoring the expanded beat instead, but this seems to work for
+            /// the most part.
             beatScore = beat.calc_score();
 
             if (beatScore > bestScore)
@@ -106,17 +169,99 @@ namespace RhythmTranscriber
                 /// expand it to fill the buffer accordingly a little later.
                 beatBuffer[beatIndex] = beat;
             }
+        }
 
-            /* std::cout << "score for division " << division << ": " << beatScore
-                      << " (distScore: " << beat.distScore
-                      << ", divisionScore: " << beat.divisionScore
-                      << ", noteScore: " << beat.noteScore << ")" << '\n'; */
+        if (bestScore == 0.f)
+        {
+            /// After trying every division, we still couldn't create the beat.
+            return false;
         }
 
         if (beatLength > 1)
         {
             expand_beat(beatIndex, beatLength);
         }
+
+        return true;
+    }
+
+    bool BeatBranch::create_beats_at(unsigned int beatIndex, unsigned int beatLength,
+                                     unsigned int noteLength, float effectiveBeatDuration)
+    {
+        /// @todo Combine into a single `create_beats_at` method.
+
+        Beat beat = Beat(dataBuffer[beatIndex].notes, noteLength, effectiveBeatDuration);
+
+        float bestScore = 0.f;
+        float beatScore;
+
+        for (unsigned int i = 0; i <= divisionDepth; i++)
+        {
+            /// Multiplying the division by `beatLength` will allow us to use a single beat instance
+            /// to score multiple beats (that don't start/end on beat) as one. This has it's
+            /// issues, but for right now it seems to work alright doing it this way instead of
+            /// trying to separate them and deal with offbeat beats individually.
+
+            /// Any division that would normally be possible for a single beat will be 1:1 to
+            /// multiple beats, just as multiples. For example, if 9 is a possible division
+            /// normally and `beatLength` is 2, 9 will become 18, and 9 will not be tested.
+
+            auto division = beatDivisions[i] * beatLength;
+
+            if (division < noteLength)
+            {
+                /// The beat will not be able to represent a division lower than `noteLength`.
+                /// Example: representing 5 notes in a beat as sixteenth notes isn't possible.
+                continue;
+            }
+
+            if (!beat.set_offbeat_note_ratios(division))
+            {
+                /// Weren't able to correctly set note ratios based off of `division`.
+                continue;
+            }
+
+            /// Since we may be using the beat as a combination of multiple beats, to get accurate
+            /// scores we need to modify the division to be what it *would* be when the beats are
+            /// split out, which will cause note ratios to add up to be `beatLength` beats. This is
+            /// essentially reversing the multiplication of the division done earlier.
+            beat.division.consequent /= beatLength;
+
+            beatScore = beat.calc_score();
+
+            if (beatScore > bestScore)
+            {
+                /// Add tiny amount to prevent a beat with an equal score overriding this one
+                /// due to floating point comparison issues.
+                bestScore = beatScore + 0.000001f;
+
+                /// Copy to buffer at startIndex. If our beat is actually a "multi-beat", we
+                /// will expand it to fill the buffer accordingly a little later.
+                beatBuffer[beatIndex] = beat;
+            }
+        }
+
+        if (bestScore == 0.f)
+        {
+            /// After trying every division, we still couldn't create the beat.
+            return false;
+        }
+
+        if (beatLength > 1)
+        {
+            expand_beat(beatIndex, beatLength);
+        }
+        else
+        {
+            /// It's possible to have beatLength of 1 with an offbeat if the beat is the last one of
+            /// the branch. We need to clean up the beat a little bit (which would normally be done
+            /// by `expand_beat`) before returning.
+
+            /// Fix beat end time.
+            beatBuffer[beatIndex].calc_time();
+        }
+
+        return true;
     }
 
     void BeatBranch::expand_beat(unsigned int beatIndex, unsigned int beatLength)
@@ -129,7 +274,7 @@ namespace RhythmTranscriber
 
         unsigned int consequent = multiBeat.division.consequent;
 
-        beatBuffer[beatIndex] = Beat(multiBeat.notes, 0);
+        beatBuffer[beatIndex] = Beat(multiBeat.notes);
 
         /// Set this now to avoid having to simplify later.
         beatBuffer[beatIndex].division.consequent = consequent;
@@ -148,70 +293,42 @@ namespace RhythmTranscriber
 
                 beatIndex++;
 
-                /// Create next beat
+                /// Create (initialize) next beat
                 beatBuffer[beatIndex] = beatBuffer[beatIndex - 1].create_next();
             }
         }
     }
 
-    float BeatBranch::calc_score(float referenceBeatDuration)
-    {
-        bpmDeltaScore = 0.f;
-        bpmDistScore = 0.f;
-
-        float avgBeatScore = 0.f;
-        float avgBeatNoteScore = 0.f;
-        float avgBeatDivScore = 0.f;
-
-        unsigned int beatDivScoreCount = 0;
-
-        for (unsigned int i = 0; i < length; i++)
-        {
-            if ((dataBuffer[i].length != beatBuffer[i].notesLen) ||
-                (dataBuffer[i].startsOffbeat && beatBuffer[i].offset.antecedent == 0))
-            {
-                /// For now at least, if the note lengths or offsets don't match, then assume that
-                /// the specifications in `dataBuffer` are not feasibly possible.
-                return 0.f;
-            }
-
-            float beatDuration = beatBuffer[i].get_duration();
-
-            bpmDistScore +=
-                1 - (beatDuration < referenceBeatDuration ? beatDuration / referenceBeatDuration
-                                                          : referenceBeatDuration / beatDuration);
-
-            if (i < length - 1)
-            {
-                float nextDuration = beatBuffer[i + 1].get_duration();
-                bpmDeltaScore = 1 - (beatDuration < nextDuration ? beatDuration / nextDuration
-                                                                 : nextDuration / beatDuration);
-            }
-
-            avgBeatScore += beatBuffer[i].score;
-            avgBeatDivScore += beatBuffer[i].divisionScore;
-            avgBeatNoteScore += beatBuffer[i].noteScore;
-        }
-
-        bpmDeltaScore = length == 1 ? 1.f : bpmDeltaScore / (length - 1);
-        bpmDistScore = bpmDistScore / length;
-
-        /// Scale
-        bpmDeltaScore = 0.01f / (bpmDeltaScore * bpmDeltaScore + 0.01f);
-
-        bpmDistScore = 0.0625f / (bpmDistScore * bpmDistScore + 0.0625f);
-
-        avgBeatScore /= length;
-        avgBeatDivScore /= length;
-        avgBeatNoteScore /= length;
-
-        /* return 0.5 * bpmDeltaScore + 0.5 * bpmDistScore; */
-        return 0.375 * bpmDeltaScore + 0.375 * bpmDistScore + 0.25 * avgBeatScore;
-    }
-
     std::string BeatData::str()
     {
         std::string str = "";
+
+        str += '[';
+        for (unsigned int i = 0; i < length; i++)
+        {
+            str += std::to_string(notes[i].timestamp);
+            if (i < length - 1)
+            {
+                str += ", ";
+            }
+        }
+        str += "] (" + std::to_string(length) + ") ";
+
+        str += "startsOffbeat: " + std::to_string(startsOffbeat) +
+               ", endsOffbeat: " + std::to_string(endsOffbeat);
+
+        return str;
+
+        /* str += (notes == nullptr
+                    ? "nullptr"
+                    : (std::to_string(notes->timestamp) + (startsOffbeat ? "(?)" : "") + "->" +
+                       (length == 0 ? "nullptr"
+                                    : std::to_string(notes[length - 1].timestamp) +
+                                          (endsOffbeat ? "(?)" : "")))) +
+               " (" + std::to_string(length) +
+               "), startsOffbeat: " + std::to_string(startsOffbeat) +
+               ", endsOffbeat: " + std::to_string(endsOffbeat);
+        return str; */
 
         float startTime =
             startsOffbeat ? (((notes - 1)->timestamp + notes->timestamp) / 2) : notes->timestamp;

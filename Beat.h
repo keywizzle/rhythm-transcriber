@@ -1,6 +1,6 @@
 #pragma once
 
-#include "NoteString.h"
+#include "Note.h"
 
 #include <array>
 #include <iostream>
@@ -36,22 +36,36 @@ namespace RhythmTranscriber
             return constexpr_sin_approx(x, 10); // Adjust the number of terms for desired accuracy
         }
 
-        const unsigned int beatDivisionScoresSize = 36;
-        constexpr std::array<std::array<float, beatDivisionScoresSize + 1>,
-                             beatDivisionScoresSize + 1>
-        get_beat_division_scores()
+        const unsigned int beatDivisionScoreTableSize = 36;
+        constexpr std::array<std::array<float, beatDivisionScoreTableSize + 1>,
+                             beatDivisionScoreTableSize + 1>
+        get_beat_division_score_table()
         {
-            std::array<std::array<float, beatDivisionScoresSize + 1>, beatDivisionScoresSize + 1>
+            std::array<std::array<float, beatDivisionScoreTableSize + 1>,
+                       beatDivisionScoreTableSize + 1>
                 arr = {};
-            for (unsigned int i = 1; i <= beatDivisionScoresSize; i++)
+            for (unsigned int i = 1; i <= beatDivisionScoreTableSize; i++)
             {
-                for (unsigned int j = 1; j <= beatDivisionScoresSize; j++)
+                for (unsigned int j = 1; j <= beatDivisionScoreTableSize; j++)
                 {
                     /// Only care about the simplified consequent of the ratio.
 
                     unsigned int ratioGCD = std::gcd(i, j);
 
                     unsigned int simplifiedDivision = j / ratioGCD;
+
+                    if (j > 1)
+                    {
+                        if (simplifiedDivision != j)
+                        {
+                            /// Use score from simplified ratio. It should already exist.
+                            arr[i][j] = arr[i / ratioGCD][simplifiedDivision];
+                        }
+                        else
+                        {
+                            arr[i][j] = arr[i][1];
+                        }
+                    }
 
                     /// Get divisibility score
                     double divisionFreq = 0;
@@ -62,42 +76,44 @@ namespace RhythmTranscriber
                             divisionFreq++;
                         }
                     }
-
-                    /// Apply sinusoidal easing (increase values > 0.5, decrease values < 0.5)
-                    /// The specific easing function (and whether or not to apply easing at all) is
-                    /// still up for thought and may change depending on results.
-
-                    /* arr[j][i] =
-                        0.5 *
-                        (constexpr_sin_approx(
-                             3.14159265359 * ((divisionFreq / simplifiedDivision) - 0.5), 10) +
-                         1); */
-
-                    /* arr[j][i] = divisionFreq / simplifiedDivision; */
-
-                    /// Exponential decay easing passing through the point (7, 0.5).
 
                     /// 0.35 for divisibility score, 0.65 for punishing larger
                     /// `simplifiedDivision`s. This is to essentially put 1/6 before 1/5, and
                     /// similar divisions.
-                    arr[j][i] = 0.65 * (divisionFreq / simplifiedDivision) +
-                                0.35 * (49.f / (simplifiedDivision * simplifiedDivision + 49));
+                    /* arr[j][i] = 0.65 * (divisionFreq / simplifiedDivision) +
+                                0.35 * (49.f / (simplifiedDivision * simplifiedDivision + 49)); */
+
+                    /* arr[j][i] = 0.6 * (divisionFreq / simplifiedDivision) +
+                                0.4 * (500.f / (simplifiedDivision * simplifiedDivision + 500)); */
+
+                    float ratioScore = 1 - (divisionFreq / simplifiedDivision);
+
+                    /* arr[j][i] =
+                        0.65 * (0.75 / (ratioScore * ratioScore * ratioScore * ratioScore + 0.75)) +
+                        0.35 * (500.0 / (simplifiedDivision * simplifiedDivision + 500)); */
+                    arr[j][i] =
+                        0.65 * (0.65 / (ratioScore * ratioScore * ratioScore * ratioScore + 0.65)) +
+                        0.35 * (50.0 / (simplifiedDivision + 50));
+
+                    /* arr[j][i] = (0.4f / (ratioScore * ratioScore * ratioScore + 0.4f)); */
+                    /* arr[j][i] = 500.0 / (simplifiedDivision * simplifiedDivision + 500); */
                 }
             }
             return arr;
         }
 
-        const unsigned int noteDivisionScoresSize = 36;
-        constexpr std::array<std::array<float, noteDivisionScoresSize + 1>,
-                             noteDivisionScoresSize + 1>
-        get_note_division_scores()
+        const unsigned int noteDivisionScoreTableSize = 36;
+        constexpr std::array<std::array<float, noteDivisionScoreTableSize + 1>,
+                             noteDivisionScoreTableSize + 1>
+        get_note_division_score_table()
         {
-            std::array<std::array<float, noteDivisionScoresSize + 1>, noteDivisionScoresSize + 1>
+            std::array<std::array<float, noteDivisionScoreTableSize + 1>,
+                       noteDivisionScoreTableSize + 1>
                 arr = {};
 
-            for (unsigned int i = 1; i <= noteDivisionScoresSize; i++)
+            for (unsigned int i = 1; i <= noteDivisionScoreTableSize; i++)
             {
-                for (unsigned int j = 1; j <= noteDivisionScoresSize; j++)
+                for (unsigned int j = 1; j <= noteDivisionScoreTableSize; j++)
                 {
                     /// Only care about the simplified consequent of the ratio.
 
@@ -114,30 +130,30 @@ namespace RhythmTranscriber
                             divisionFreq++;
                         }
                     }
-                    /// Exponential decay easing passing through the point (7, 0.6).
 
-                    /* arr[j][i] = 0.5 * (divisionFreq / simplifiedDivision) +
-                                0.5 * (384.f / (simplifiedDivision * simplifiedDivision + 384)); */
-                    arr[j][i] = 0.3 * (divisionFreq / simplifiedDivision) +
-                                0.7 * (196.f / (simplifiedDivision * simplifiedDivision + 196));
-                    /* arr[j][i] =
-                        0.5 * (-384.f / (std::pow(divisionFreq / simplifiedDivision, 1.1f) + 384) +
-                               1) +
-                        0.5 * (384.f / (simplifiedDivision * simplifiedDivision + 384)); */
+                    /* arr[j][i] = 0.3 * (divisionFreq / simplifiedDivision) +
+                                0.7 * (196.f / (simplifiedDivision * simplifiedDivision + 196)); */
+
+                    float ratioScore = 1 - (divisionFreq / simplifiedDivision);
+
+                    arr[j][i] = 0.25 * (0.4 / (ratioScore * ratioScore + 0.4)) +
+                                0.75 * (250.0 / (simplifiedDivision * simplifiedDivision + 250));
+                    /* arr[j][i] = (0.4f / (ratioScore * ratioScore + 0.4f)); */
+                    /* arr[j][i] = (196.f / (simplifiedDivision * simplifiedDivision + 196)); */
                 }
             }
 
             return arr;
         }
 
-        const unsigned int divisibilityScoresSize = 36;
-        constexpr std::array<float, divisibilityScoresSize + 1> get_divisibility_scores()
+        const unsigned int divisibilityScoreTableSize = 36;
+        constexpr std::array<float, divisibilityScoreTableSize + 1> get_divisibility_score_table()
         {
-            std::array<float, divisibilityScoresSize + 1> arr = {};
-            for (unsigned int i = 1; i <= divisibilityScoresSize; i++)
+            std::array<float, divisibilityScoreTableSize + 1> arr = {};
+            for (unsigned int i = 1; i <= divisibilityScoreTableSize; i++)
             {
                 float divisionFreq = 0.f;
-                for (unsigned int j = 1; j <= divisibilityScoresSize; j++)
+                for (unsigned int j = 1; j <= divisibilityScoreTableSize; j++)
                 {
                     if (i % j == 0)
                     {
@@ -145,6 +161,7 @@ namespace RhythmTranscriber
                     }
                 }
                 arr[i] = divisionFreq / i;
+                /* arr[i] = (float)i / divisionFreq; */
             }
             return arr;
         }
@@ -152,11 +169,11 @@ namespace RhythmTranscriber
 
     /// @brief Contains score information stored in a matrix based around how divisible the beat's
     /// division is at the time a note with a significantly different division is added to the beat.
-    constexpr auto beatDivisionScores = get_beat_division_scores();
+    constexpr auto beatDivisionScoreTable = get_beat_division_score_table();
 
-    constexpr auto noteDivisionScores = get_note_division_scores();
+    constexpr auto noteDivisionScoreTable = get_note_division_score_table();
 
-    constexpr auto divisibilityScores = get_divisibility_scores();
+    constexpr auto divisibilityScoreTable = get_divisibility_score_table();
 
     /// Score weighting for determining beat score. Each of these should be a number between 0 and 1
     /// that all sum to 1.
@@ -185,7 +202,7 @@ namespace RhythmTranscriber
     {
     public:
         /// @brief A context-dependent and more accurate form of `antecedent` if it wasn't an
-        /// integer. Specifically, it's the note's duration divided by the beat duration.
+        /// integer. Specifically, it's the note's duration divided by the beat's base duration.
         /// @note The reason such a simple calculation is stored here is because it's done
         /// automatically when note ratios are set, which can be reused when calculating score.
         /// @todo see if it's faster to just recalculate when getting score than having to set/get)
@@ -202,11 +219,9 @@ namespace RhythmTranscriber
         /// @brief Number of notes in the beat. This does not include the downbeat of the next beat.
         unsigned int notesLen = 0;
 
-        /// TODO: Having this be stack allocated will provide a HUGE performance boost. Use
-        /// something similar to SSO.
-        std::vector<NoteRatio> noteRatios = std::vector<NoteRatio>(8, NoteRatio{});
-        /* NoteRatio noteRatios[8] = {NoteRatio{}, NoteRatio{}, NoteRatio{}, NoteRatio{},
-                                   NoteRatio{}, NoteRatio{}, NoteRatio{}, NoteRatio{}}; */
+        /* std::vector<NoteRatio> noteRatios = std::vector<NoteRatio>(32, NoteRatio{}); */
+        std::vector<NoteRatio> noteRatios;
+        /* std::array<NoteRatio, 32> noteRatios; */
 
         /// @brief Offest at the beginning of the beat until the first note. This is non-zero when
         /// the previous beat has a note that extends past the full beat's division.
@@ -244,41 +259,17 @@ namespace RhythmTranscriber
 
         Beat();
 
+        /// @brief Assumes `notesLen` is 0.
+        /// @param notes
+        Beat(BaseNote *notes);
+
         Beat(BaseNote *notes, unsigned int notesLen);
 
-        Beat(BaseNote *notes, unsigned int notesLen, unsigned int division);
-
-        inline void init_notes(BaseNote *notes, unsigned int notesLen)
-        {
-            /// TODO: Maybe put timestamp and duration along with `NoteRatio` to maybe make better
-            /// use of the cache.
-
-            this->notes = notes;
-            this->notesLen = notesLen;
-
-            /// Set start/end time, assuming all notes fit perfectly within the beat.
-            startTime = notes->timestamp;
-            /// Hopefully this doesn't cause any errors.
-            endTime = (notes + notesLen)->timestamp;
-
-            duration = endTime - startTime;
-
-            if (noteRatios.size() < notesLen)
-            {
-                noteRatios.resize(notesLen, NoteRatio{});
-            }
-        }
-
-        inline void init_division(unsigned int division)
-        {
-            this->division = BaseRatio{0, division};
-
-            for (unsigned int i = 0; i < notesLen; i++)
-            {
-                /* noteRatios.at(i) = NoteRatio{0, division, 0.f}; */
-                noteRatios[i] = NoteRatio{0, division, 0.f};
-            }
-        }
+        /// @brief This is used to create a beat when the beat doesn't end on a downbeat note.
+        /// @param notes
+        /// @param notesLen
+        /// @param beatDuration
+        Beat(BaseNote *notes, unsigned int notesLen, float beatDuration);
 
         /// @brief Sets the offset of this beat.
         /// @note Start/end times are not adjusted. (maybe TODO..?)
@@ -305,7 +296,15 @@ namespace RhythmTranscriber
         /// @note Only use this when constraints have been set (`notes` and `notesLen`). This
         /// assumes all notes should fit perfectly within the beat.
         /// @param division
-        void set_note_ratios(unsigned int division);
+        /// @return `true` if this beat now represents a valid beat, `false` otherwise.
+        bool set_note_ratios(unsigned int division);
+
+        /// @brief Determines the most-likely to occur note ratios based on `division`.
+        /// @note This is for when the notes are known to not fit perfectly in the beat, and that
+        /// the beat should have a tail.
+        /// @param division
+        /// @return `true` if this beat now represents a valid offbeat, `false` otherwise.
+        bool set_offbeat_note_ratios(unsigned int division);
 
         /// @brief Determines the most-likely to occur note ratios based on `division` and
         /// `baseDuration`.
@@ -331,12 +330,6 @@ namespace RhythmTranscriber
 
                 partialSum += noteDivision > 1.f ? noteDivision : 1.f;
             }
-            /* for (unsigned int i = 0; i < notesLen; i++)
-            {
-                std::cout << "notes: " << noteRatios.at(i).antecedent << "/"
-                          << noteRatios.at(i).consequent << ", ";
-            }
-            std::cout << '\n';  */
         }
 
         /// @brief Recalculates each `noteRatio`'s `partial` value. Since it's dependent on beat
@@ -345,9 +338,22 @@ namespace RhythmTranscriber
 
         float calc_score();
 
-        void calc_end_time();
+        /// @brief Calculates the beat's `endTime` and `duration` properties based on `startTime`
+        /// and the composition of `noteRatios`. Use this if using note timestamps won't work, ie
+        /// the beat has a tail.
+        void calc_time();
 
         inline float get_duration() const { return duration; }
+
+        inline bool has_tail() { return division.antecedent > division.consequent; }
+
+        /// @brief Checks if the last note should be within this beat.
+        /// @return
+        inline bool end_is_valid()
+        {
+            return (notesLen < 2 || division.antecedent - noteRatios[notesLen - 1].antecedent <
+                                        division.consequent);
+        }
 
         std::vector<Beat> get_trailing_beats();
 
@@ -358,57 +364,4 @@ namespace RhythmTranscriber
 
         void transform_note_ratios(float ratio);
     };
-    /* struct BeatDivision
-    {
-        BeatDivisionValue numerator = 0;
-        BeatDivisionValue denominator = 0;
-
-        float duration = 0;
-
-        operator bool() const;
-    };
-
-    class Beat
-    {
-    public:
-        /// @brief Timestamp of the start of the beat.
-        float timestamp;
-
-        /// @brief Duration of the beat (TODO: Isn't this the same as `division.duration`?).
-        float duration;
-
-        /// @brief If set to nonzero, the beat will add notes that have a division denominator as a
-        /// factor of `forceDivision`. If a note is added whose estimated rhythm does not follow
-        /// this criteria, the note's rhythm interpretation will be set to the next matching rhythm
-        /// that does follow the criteria.
-        BeatDivisionValue forceDivision = 0;
-
-        /// @brief Division of the beat. Basically, how much of the beat is occupied by notes. For
-        /// example, a division of 1/4 means 1/4th of the beat (equivalent to one sixteenth note)
-        /// from the start of the beat is taken.
-        BeatDivision division;
-
-        /// @brief Offest at the beginning of the beat until the first note. This is a
-        BeatDivision offset;
-
-        /// @brief Beat division of a note that extends outside the end of the beat. This can be
-        /// used to define the next note's `offset`.
-        BeatDivision tail;
-
-        /// TODO: Maybe we change this to a stack array (std::array) with a size of like 16 (or
-        /// maybe defined in config) if performance seems to be an issue.
-        std::vector<NoteInterpretation> notes;
-
-        Beat(float timestamp);
-        Beat(float timestamp, BeatDivision offset);
-        Beat(float timestamp, BeatDivisionValue forceDivision);
-        Beat(float timestamp, BeatDivision offset, BeatDivisionValue forceDivision);
-
-
-        void addNoteInterpretation(NoteInterpretation &note);
-
-        void addNote(float timestamp, float duration, NoteRhythm rhythm);
-
-        std::string str(bool compact = false);
-    }; */
 }

@@ -1,6 +1,7 @@
 #pragma once
 
-#include "NoteString.h"
+#include "Config.h"
+#include "Note.h"
 #include <math.h>
 #include <vector>
 
