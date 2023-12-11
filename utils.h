@@ -21,4 +21,6 @@ namespace
         if (display)
             std::cout << ElapsedMicroseconds.QuadPart << std::endl;
     }
+    LONGLONG GetElapsedTime() { return ElapsedMicroseconds.QuadPart; }
+
 }
