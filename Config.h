@@ -39,5 +39,5 @@ namespace RhythmTranscriber
 
     /// @brief When creating a new beat branch, this is the minimum amount of time that must pass
     /// since the previous beat for one to be created.
-    const float minBeatBranchOffsetTime = 0.09f;
+    const float minBeatBranchOffbeatTime = 0.09f;
 }
