@@ -6,52 +6,10 @@
 
 namespace RhythmTranscriber
 {
-    unsigned int iters = 0;
-
     /// Weight definition
     float divisionWeight = 0.2f;
     float noteWeight = 0.3f;
     float distWeight = 0.7f;
-
-    /// BaseRatio
-    void BaseRatio::simplify()
-    {
-        float gcd = std::gcd(antecedent, consequent);
-        antecedent /= gcd;
-        consequent /= gcd;
-    }
-
-    void BaseRatio::add(const BaseRatio ratio)
-    {
-        if (consequent == 0)
-        {
-            this->antecedent = ratio.antecedent;
-            this->consequent = ratio.consequent;
-        }
-        else if (ratio.consequent == consequent)
-        {
-            antecedent += ratio.antecedent;
-        }
-        else
-        {
-            /// I think `ratio` needs to be in simplest form for the below to work properly. Haven't
-            /// had to deal with it yet, but if it becomes an issue `simplify` will have to be used.
-            /* ratio.simplify(); */
-
-            auto consequentLCM = std::lcm(consequent, ratio.consequent);
-
-            antecedent = antecedent * (consequentLCM / consequent) +
-                         ratio.antecedent * (consequentLCM / ratio.consequent);
-            consequent = consequentLCM;
-        }
-    }
-
-    BaseRatio &BaseRatio::operator+=(const BaseRatio ratio)
-    {
-        add(ratio);
-
-        return *this;
-    }
 
     /// Beat
 
@@ -72,7 +30,8 @@ namespace RhythmTranscriber
 
         duration = endTime - startTime;
 
-        noteRatios = std::vector<NoteRatio>(16, NoteRatio{});
+        /* noteValues = std::vector<NoteRatio>(16, NoteRatio{}); */
+        noteValues = std::vector<unsigned int>(16, 0);
     }
 
     Beat::Beat(BaseNote *notes, unsigned int notesLen)
@@ -82,20 +41,11 @@ namespace RhythmTranscriber
 
         /// Set start/end time, assuming all notes fit perfectly within the beat.
         startTime = notes->timestamp;
-        /// Hopefully this doesn't cause any errors.
-        /* endTime = (notes + notesLen)->timestamp; */ /// It caused errors.
         endTime = notes[notesLen - 1].timestamp + notes[notesLen - 1].duration;
-        /* endTime = (notes + notesLen - 1)->timestamp + (notes + notesLen - 1)->duration; */
 
         duration = endTime - startTime;
 
-        /* noteRatios = std::vector<NoteRatio>(notesLen == 0 ? 16 : notesLen, NoteRatio{}); */
-        noteRatios = std::vector<NoteRatio>(notesLen, NoteRatio{});
-
-        /* if (noteRatios.size() < notesLen)
-        {
-            noteRatios.resize(notesLen, NoteRatio{});
-        } */
+        noteValues = std::vector<unsigned int>(notesLen, 0);
     }
     Beat::Beat(BaseNote *notes, unsigned int notesLen, float beatDuration)
     {
@@ -108,7 +58,8 @@ namespace RhythmTranscriber
 
         duration = beatDuration;
 
-        noteRatios = std::vector<NoteRatio>(notesLen == 0 ? 16 : notesLen, NoteRatio{});
+        /* noteValues = std::vector<NoteRatio>(notesLen == 0 ? 16 : notesLen, NoteRatio{}); */
+        noteValues = std::vector<unsigned int>(notesLen, 0);
 
         /* if (noteRatios.size() < notesLen)
         {
@@ -145,7 +96,7 @@ namespace RhythmTranscriber
         return newBeat;
     }
 
-    void Beat::add_note(NoteRatio noteRatio)
+    void Beat::add_note(Ratio noteRatio)
     {
         /// Add to division.
         if (division.consequent == 0)
@@ -165,24 +116,22 @@ namespace RhythmTranscriber
             {
                 /// Note ratio antecedents must be adjusted. This should be fairly rare when
                 /// transcribing, but adding notes from fully-simplified ratios could cause this.
-                transform_note_ratios(consequentLCM / division.consequent);
+                transform_note_values(consequentLCM / division.consequent);
             }
 
             noteRatio.antecedent = noteRatio.antecedent * (consequentLCM / noteRatio.consequent);
-            noteRatio.consequent = consequentLCM;
 
             division.antecedent =
                 division.antecedent * (consequentLCM / division.consequent) + noteRatio.antecedent;
             division.consequent = consequentLCM;
         }
 
-        /// Add note to noteRatios.
-        if (noteRatios.size() == notesLen)
+        if (noteValues.size() == notesLen)
         {
-            noteRatios.resize(notesLen + 8, NoteRatio{});
+            noteValues.resize(notesLen + 8, 0);
         }
 
-        noteRatios[notesLen] = noteRatio;
+        noteValues[notesLen] = noteRatio.antecedent;
 
         notesLen++;
 
@@ -203,24 +152,30 @@ namespace RhythmTranscriber
         }
     }
 
-    void Beat::transform_note_ratios(float ratio)
+    void Beat::transform_note_values(float ratio)
     {
         for (unsigned int i = 0; i < notesLen; i++)
         {
-            noteRatios[i].antecedent *= ratio;
+            noteValues[i] *= ratio;
         }
     }
 
-    bool Beat::set_note_ratios(unsigned int division)
+    bool Beat::set_note_values(unsigned int division)
     {
+        /// I don't think we actually should bother checking for offset, since I don't think it's
+        /// possible to call this on a beat with an offset due to `expand_beat` being the one to set
+        /// offsets. TODO remove...? Although maybe we get into a situation where this will be
+        /// important.
         if (!offset.antecedent)
         {
-            this->division = BaseRatio{0, division};
+            this->division = Ratio{0, division};
         }
+
+        division *= subBeatCount;
 
         float baseDuration = duration / division;
 
-        set_note_ratios(division, baseDuration);
+        set_note_values(baseDuration);
 
         unsigned int doubleDivision = division * 2;
 
@@ -245,7 +200,7 @@ namespace RhythmTranscriber
             /// Estimates the beat duration to set to get the desired antecedent.
             baseDuration *= (partialSum + this->division.antecedent) / doubleDivision;
 
-            set_note_ratios(division, baseDuration);
+            set_note_values(baseDuration);
 
             iters++;
         }
@@ -253,16 +208,22 @@ namespace RhythmTranscriber
         return true;
     }
 
-    bool Beat::set_offbeat_note_ratios(unsigned int division)
+    bool Beat::set_offbeat_note_values(unsigned int division)
     {
+        /// I don't think we actually should bother checking for offset, since I don't think it's
+        /// possible to call this on a beat with an offset due to `expand_beat` being the one to set
+        /// offsets. TODO remove...? Although maybe we get into a situation where this will be
+        /// important.
         if (!offset.antecedent)
         {
-            this->division = BaseRatio{0, division};
+            this->division = Ratio{0, division};
         }
+
+        division *= subBeatCount;
 
         float baseDuration = duration / division;
 
-        set_note_ratios(division, baseDuration);
+        set_note_values(baseDuration);
 
         /// Factor to multiply/divide `baseDuration` by. Since this is static, it could lead to
         /// ping-ponging, but due to the low chance of an actual offbeat requiring multiple
@@ -305,7 +266,7 @@ namespace RhythmTranscriber
                 baseDuration *= divisionFactor;
             }
 
-            set_note_ratios(division, baseDuration);
+            set_note_values(baseDuration);
 
             endIsValid = end_is_valid();
             hasTail = has_tail();
@@ -316,30 +277,16 @@ namespace RhythmTranscriber
         return true;
     }
 
-    void Beat::calc_note_partials()
-    {
-        float baseDuration = duration / division.consequent;
-
-        for (unsigned int i = 0; i < notesLen; i++)
-        {
-            noteRatios[i].partial = notes[i].duration / baseDuration;
-        }
-    }
-
-    /// @brief
-    /// @note This assumes all `noteRatio`s have `partial` set correctly.
-    /// @return
     float Beat::calc_score()
     {
         distScore = 0.f;
         divisionScore = 1.f;
         noteScore = 0.f;
 
-        unsigned int noteChangeCount = 0;
-        unsigned int prevAntecedent = noteRatios[0].antecedent;
-        unsigned int beatAntecedent = 0;
+        float baseDuration = duration / (division.consequent * subBeatCount);
 
-        float divScore = 0.f;
+        unsigned int prevAntecedent = noteValues[0];
+        unsigned int beatAntecedent = 0;
 
         float distScoreSum = 0.f;
         float distWeightSum = 0.f;
@@ -347,27 +294,42 @@ namespace RhythmTranscriber
         float beatScoreSum = 0.f;
         float beatWeightSum = 0.f;
 
+        /// These are for calculating (weighted) standard deviation to apply with dist score. It
+        /// adds a bit of overhead for a very slight boost in accuracy. TODO: Add this at some
+        /// point.
+        /* float noteDistSum = 0.f;
+        /// sum x
+        float distSumSquared = 0.f;
+        /// sum wx^2
+        float weightDistSquaredSum = 0.f; */
+
         for (unsigned int i = 0; i < notesLen; i++)
         {
             float beatScore = 0.f;
             float beatWeight = 0.f;
 
-            auto antecedent = noteRatios[i].antecedent;
+            auto antecedent = noteValues[i];
 
             /// Dist score
 
-            float distScoreBase = noteRatios[i].partial / antecedent;
+            /* float distScoreBase = noteValues[i].partial / antecedent; */
+            float distScoreBase = (notes[i].duration / baseDuration) / antecedent;
 
             /// Humans aren't as good at timing longer notes than they are shorter notes (I think),
             /// unless the notes are repeated consecutively with a metronome.
             /// Basically, longer notes leave more room for error, so make longer notes have
             /// slightly less impact on overall dist score.
-            float noteDistWeight =
-                (0.05f / ((notes + i)->duration * (notes + i)->duration + 0.05f));
+            /* float noteDistWeight = (0.05f / (notes[i].duration * notes[i].duration + 0.05f)); */
+            float noteDistWeight = (0.1f / (notes[i].duration * notes[i].duration + 0.1f));
 
-            distScore += noteDistWeight * (distScoreBase > 1 ? 1.f / distScoreBase : distScoreBase);
+            float noteDistScore = (distScoreBase > 1 ? 1.f / distScoreBase : distScoreBase);
 
+            distScore += noteDistWeight * noteDistScore;
             distWeightSum += noteDistWeight;
+
+            /* noteDistSum += noteDistScore;
+            distSumSquared += noteDistScore * noteDistScore;
+            weightDistSquaredSum += noteDistWeight * noteDistScore * noteDistScore; */
 
             /// In the case we're scoring a multi-beat, going over the consequent should reset the
             /// running antecedent.
@@ -380,12 +342,8 @@ namespace RhythmTranscriber
                 prevAntecedent = beatAntecedent == 0 ? antecedent : beatAntecedent;
             }
 
-            /// Division score
-            /// Omit when division changes on eighth note (at least for now) to avoid always buffing
-            /// (or hurting) with ~0.97 division score.
-            if (antecedent != prevAntecedent /* &&
-                beatAntecedent != (float)this->division.consequent / 2 */
-                && beatAntecedent < this->division.consequent)
+            /// Sub-beat score
+            if (antecedent != prevAntecedent && beatAntecedent < this->division.consequent)
             {
                 if (antecedent > prevAntecedent)
                 {
@@ -393,16 +351,12 @@ namespace RhythmTranscriber
                     {
                         divisionScore *=
                             beatDivisionScoreTable[this->division.consequent][beatAntecedent];
-
-                        noteChangeCount++;
                     }
                 }
                 else if (prevAntecedent % antecedent != 0)
                 {
                     divisionScore *=
                         beatDivisionScoreTable[this->division.consequent][beatAntecedent];
-
-                    noteChangeCount++;
                 }
             }
 
@@ -418,45 +372,74 @@ namespace RhythmTranscriber
 
         noteScore /= notesLen;
 
+        /* float noteDistMean = noteDistSum / notesLen;
+        float noteDistSd =
+            std::sqrt((weightDistSquaredSum +
+                       distScore * (distScore * distWeightSum - 2 * distScore * distWeightSum)) /
+                      distWeightSum);
+        distScore = 0.7f * distScore + 0.3f * (0.01f / (noteDistSd * noteDistSd + 0.01f)); */
+
+        if (division.antecedent % division.consequent && division.consequent % division.antecedent)
+        {
+            /// Segfault here if antecedent is smaller than consequent (but that shouldn't occur
+            /// anyways)
+            divisionScore *= beatDivisionScoreTable[division.consequent]
+                                                   [division.antecedent - division.consequent];
+        }
+
+        /* return score = ((distWeight * distScore * divisionScore) + noteWeight * noteScore) /
+                       (distWeight + noteWeight); */
         return score = ((distWeight * distScore * divisionScore) + noteWeight * noteScore) /
                        (distWeight + noteWeight);
     }
 
     void Beat::calc_time()
     {
-        /// I'm not sure which method for calculating time is the correct one, but I think it's
-        /// this one.
-        /* endTime = (notes + notesLen - 1)->timestamp +
-                  (notes + notesLen - 1)->duration *
-                      ((float)(division.consequent -
-                               (division.antecedent - noteRatios[notesLen - 1].antecedent)) /
-                       division.consequent); */
-        endTime = (notes + notesLen - 1)->timestamp +
-                  (notes + notesLen - 1)->duration *
-                      ((float)(division.consequent -
-                               (division.antecedent - noteRatios[notesLen - 1].antecedent)) /
-                       noteRatios[notesLen - 1].antecedent);
+        endTime =
+            (notes + notesLen - 1)->timestamp +
+            (notes + notesLen - 1)->duration *
+                ((float)(division.consequent - (division.antecedent - noteValues[notesLen - 1])) /
+                 noteValues[notesLen - 1]);
 
         duration = endTime - startTime;
     }
 
-    std::vector<Beat> Beat::get_trailing_beats()
+    float Beat::note_dist_sd()
     {
-        if (division.antecedent <= division.consequent)
+        unsigned int effectiveConsequent = division.consequent * subBeatCount;
+
+        float baseDuration = duration / effectiveConsequent;
+
+        float distSum = 0.f;
+        float distWeightSum = 0.f;
+
+        for (unsigned int i = 0; i < notesLen; i++)
         {
-            return std::vector<Beat>();
+            float distScoreBase = (notes[i].duration / baseDuration) / noteValues[i];
+
+            float noteDistWeight = (0.1f / (notes[i].duration * notes[i].duration + 0.1f));
+
+            distSum += noteDistWeight * (distScoreBase > 1 ? 1.f / distScoreBase : distScoreBase);
+
+            distWeightSum += noteDistWeight;
         }
 
-        auto tailAntecedent = division.antecedent - division.consequent;
-        auto tailConsequent = division.consequent;
+        float avgDist = distSum / distWeightSum;
 
-        unsigned int trailingBeatLen = std::ceil(tailAntecedent / tailConsequent);
+        float avgDiffSum = 0.f;
+        for (unsigned int i = 0; i < notesLen; i++)
+        {
+            float distScoreBase = (notes[i].duration / baseDuration) / noteValues[i];
 
-        std::vector<Beat> trailingBeats = std::vector<Beat>(trailingBeatLen, Beat());
-        trailingBeats.at(trailingBeatLen - 1).division.antecedent =
-            tailConsequent - (trailingBeatLen * tailConsequent - tailAntecedent);
+            avgDiffSum += (distScoreBase - avgDist) * (distScoreBase - avgDist);
+        }
 
-        return trailingBeats;
+        /* float distSd = std::sqrt(avgDiffSum / notesLen); */
+        float distSd = avgDiffSum / notesLen;
+
+        /* std::cout << "sd: " << distSd << '\n'; */
+
+        return distSd;
     }
 
     std::string Beat::str()
@@ -477,8 +460,7 @@ namespace RhythmTranscriber
 
         for (unsigned int i = 0; i < notesLen; i++)
         {
-            str += std::to_string(noteRatios[i].antecedent) + '/' +
-                   std::to_string(/* noteRatios[i].consequent */ division.consequent);
+            str += std::to_string(noteValues[i]) + '/' + std::to_string(division.consequent);
             if (i < notesLen - 1)
             {
                 str += ", ";
@@ -487,181 +469,4 @@ namespace RhythmTranscriber
 
         return str;
     }
-
-    /* Beat::Beat(float timestamp) { this->timestamp = timestamp; }
-    Beat::Beat(float timestamp, BeatDivision offset) : Beat::Beat(timestamp)
-    {
-        /// Since forceDivision wasn't passed, we don't have to worry about it existing already
-        this->offset = offset;
-        this->division = offset;
-        this->duration = offset.duration;
-    }
-    Beat::Beat(float timestamp, BeatDivisionValue forceDivision) : Beat::Beat(timestamp)
-    {
-        /// Since offset wasn't passed, we don't have to worry about it existing already
-        this->forceDivision = forceDivision;
-    }
-    Beat::Beat(float timestamp, BeatDivision offset, BeatDivisionValue forceDivision)
-        : Beat::Beat(timestamp, offset)
-    {
-        /// Offset has priority over forceDivision, which is why the above constructor is delegated.
-
-        this->forceDivision = forceDivision;
-
-        /// Check if attempting to create a beat with difference forced division and offset division
-        if (forceDivision != offset.denominator)
-        {
-            auto denomLCM = std::lcm(offset.denominator, forceDivision);
-            this->division.denominator = denomLCM;
-            this->division.numerator = offset.numerator * (denomLCM / offset.denominator);
-        }
-    }
-
-    void Beat::addNoteInterpretation(NoteInterpretation &note)
-    {
-        auto noteDuration = note.rhythm.get_duration();
-
-        /// Division of the note itself (as a BeatDivision), beats becomes numerator and notes
-        /// becomes denominator, since notes/rhythms are represented as notes/beats and beat
-        /// divisions are represented as fractions of space in the beat.
-        /// Ex: 4/1 (rhythm) => 4 notes / 1 beat => sixteenth note, which takes up 1/4th of a beat.
-        BeatDivision noteDivision =
-            BeatDivision{note.rhythm.beats, note.rhythm.notes, noteDuration};
-
-        if (division.denominator == 0)
-        {
-            division = noteDivision;
-        }
-        else
-        {
-            auto denomLCM = std::lcm(division.denominator, noteDivision.denominator);
-
-            auto numerator1 = division.numerator * (denomLCM / division.denominator);
-            auto numerator2 = noteDivision.numerator * (denomLCM / noteDivision.denominator);
-
-            division.numerator = numerator1 + numerator2;
-            division.denominator = denomLCM;
-            division.duration += noteDivision.duration;
-        }
-
-        notes.push_back(note);
-
-        /// Check if we're adding a note that extends past the note's duration
-        if (division.numerator > division.denominator)
-        {
-            /// unsigned char - unsigned char results in an int output, and since numerator >
-            /// denominator we will guaranteed have enough space anyways.
-            tail = BeatDivision{(BeatDivisionValue)(division.numerator - division.denominator),
-                                division.denominator, note.rhythm.bpm};
-        }
-
-        /// Only add to duration the part of the note that would be inside this beat
-        duration += noteDuration - (tail.denominator == 0 ? 0 : tail.duration);
-
-        /// Stats
-        /// TODO
-    }
-
-    /// @brief TESTING PURPOSES
-    /// @param timestamp
-    /// @param duration
-    /// @param rhythm
-    void Beat::addNote(float timestamp, float duration, NoteRhythm rhythm)
-    {
-        /// Fix rhythm BPM
-        rhythm.set_duration(duration);
-
-        /// Division of the note itself (as a BeatDivision), beats becomes numerator and notes
-        /// becomes denominator, since notes/rhythms are represented as notes/beats and beat
-        /// divisions are represented as fractions of space in the beat.
-        /// Ex: 4/1 (rhythm) => 4 notes / 1 beat => sixteenth note, which takes up 1/4th of a beat.
-        BeatDivision noteDivision = BeatDivision{rhythm.beats, rhythm.notes, duration};
-
-        if (division.denominator == 0)
-        {
-            division = noteDivision;
-        }
-        else
-        {
-            auto denomLCM = std::lcm(division.denominator, noteDivision.denominator);
-
-            auto numerator1 = division.numerator * (denomLCM / division.denominator);
-            auto numerator2 = noteDivision.numerator * (denomLCM / noteDivision.denominator);
-
-            division.numerator = numerator1 + numerator2;
-            division.denominator = denomLCM;
-            division.duration += noteDivision.duration;
-        }
-
-        /// Check if we're adding a note that extends past the note's duration
-        if (division.numerator > division.denominator)
-        {
-            /// unsigned char - unsigned char results in an int output, and since numerator >
-            /// denominator we will guaranteed have enough space anyways.
-            tail = BeatDivision{(BeatDivisionValue)(division.numerator - division.denominator),
-                                division.denominator, rhythm.bpm};
-        }
-
-        /// Only add to duration the part of the note that would be inside this beat
-        this->duration += duration - (tail.denominator == 0 ? 0 : tail.duration);
-
-        /// Stats
-        /// TODO
-    }
-
-    /// BeatDivision
-
-    BeatDivision::operator bool() const
-    {
-        return (bool)numerator;
-        /// A better check would go as follows:
-        /// return (bool)numerator || (bool)denominator || (bool)duration
-        /// However, this would probably slow down every time the division exists it has to check
-        /// all three instead of just one
-    }
-
-    std::string Beat::str(bool compact)
-    {
-        std::string str = "\n";
-        if (compact)
-        {
-            str += "timestamp: " + std::to_string(timestamp) +
-                   ", duration: " + std::to_string(duration) +
-                   ", division: " + std::to_string(division.numerator) + "/" +
-                   std::to_string(division.denominator) +
-                   ", offset: " + std::to_string(offset.numerator) + "/" +
-                   std::to_string(offset.denominator) +
-                   " duration: " + std::to_string(offset.duration) +
-                   ", forceDivision: " + std::to_string(forceDivision) + '\n';
-        }
-        else
-        {
-            str += "- Timestamp: " + std::to_string(timestamp) +
-                   "\n- Duration: " + std::to_string(duration) +
-                   "\n- Division: " + std::to_string(division.numerator) + "/" +
-                   std::to_string(division.denominator) + ", with a duration of " +
-                   std::to_string(division.duration) + '\n';
-            if (offset.denominator != 0)
-            {
-                str += "- Offset: " + std::to_string(offset.numerator) + "/" +
-                       std::to_string(offset.denominator) + ", with a duration of " +
-                       std::to_string(offset.duration) + '\n';
-            }
-            if (forceDivision)
-            {
-                str += "- forceDivision: " + std::to_string(forceDivision) + '\n';
-            }
-            auto notesSize = notes.size();
-            for (unsigned int i = 0; i < notesSize; i++)
-            {
-                auto note = notes[i];
-                str += "\t- Note at " + std::to_string(note.note->timestamp) +
-                       " rhythm: " + std::to_string(note.rhythm.notes) + "/" +
-                       std::to_string(note.rhythm.beats) + " at " +
-                       std::to_string(note.rhythm.bpm) + " BPM\n";
-            }
-        }
-
-        return str;
-    } */
 }

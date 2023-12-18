@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Note.h"
+#include "Ratio.h"
 
 #include <array>
 #include <iostream>
@@ -11,8 +12,6 @@
 
 namespace RhythmTranscriber
 {
-    extern unsigned int iters;
-
     namespace
     {
         /// Imagine having constexpr sine in the standard library.
@@ -34,7 +33,7 @@ namespace RhythmTranscriber
         }
         constexpr double constexpr_sine(double x)
         {
-            x = std::fmod(x, 2 * M_PI);         // Normalize angle to [0, 2*pi]
+            x = std::fmod(x, 2 * 3.141592653);  // Normalize angle to [0, 2*pi]
             return constexpr_sin_approx(x, 10); // Adjust the number of terms for desired accuracy
         }
 
@@ -184,50 +183,23 @@ namespace RhythmTranscriber
     extern float noteWeight;
     extern float distWeight;
 
-    class BaseRatio
-    {
-    public:
-        unsigned int antecedent = 0;
-        unsigned int consequent = 0;
-
-        /// @brief Adds a ratio.
-        /// @param ratio
-        /// @return
-        void add(const BaseRatio ratio);
-
-        BaseRatio &operator+=(const BaseRatio ratio);
-
-        void simplify();
-    };
-
-    class NoteRatio : public BaseRatio
-    {
-    public:
-        /// @brief A context-dependent and more accurate form of `antecedent` if it wasn't an
-        /// integer. Specifically, it's the note's duration divided by the beat's base duration.
-        /// @note The reason such a simple calculation is stored here is because it's done
-        /// automatically when note ratios are set, which can be reused when calculating score.
-        /// @todo see if it's faster to just recalculate when getting score than having to set/get)
-        float partial = 0.f;
-    };
-
     class Beat
     {
     public:
-        BaseRatio division = BaseRatio{0, 0};
+        Ratio division = Ratio{0, 0};
 
         BaseNote *notes = nullptr;
 
         /// @brief Number of notes in the beat. This does not include the downbeat of the next beat.
         unsigned int notesLen = 0;
 
-        /* std::vector<NoteRatio> noteRatios = std::vector<NoteRatio>(32, NoteRatio{}); */
-        std::vector<NoteRatio> noteRatios;
+        /* std::vector<NoteRatio> noteRatios; */
         /* std::array<NoteRatio, 32> noteRatios; */
+        std::vector<unsigned int> noteValues;
 
         /// @brief Offest at the beginning of the beat until the first note. This is non-zero when
         /// the previous beat has a note that extends past the full beat's division.
-        BaseRatio offset = BaseRatio{0, 0};
+        Ratio offset = Ratio{0, 0};
 
         /// @brief Duration of the beat, total time taken up by notes.
         float duration = 0.f;
@@ -240,9 +212,9 @@ namespace RhythmTranscriber
         /// note's timestamp.
         float endTime = 0.f;
 
-        /* /// @brief Tail at the end of the beat. This is usually just the difference between the
-        /// beat's division consequent and antecedent.
-        BaseRatio tail = BaseRatio{0, 0}; */
+        /// @brief If the beat is being used to represent multiple beats, setting this will allow
+        /// for accurate note ratios and scoring.
+        unsigned int subBeatCount = 1;
 
         /// @brief Average score of each note based on how far the note's chosen division is to the
         /// note's actual duration.
@@ -292,28 +264,26 @@ namespace RhythmTranscriber
 
         /// @brief
         /// @param noteRatio
-        void add_note(NoteRatio noteRatio);
+        void add_note(Ratio noteRatio);
 
         /// @brief Determines the most-likely to occur note ratios based on `division`.
         /// @note Only use this when constraints have been set (`notes` and `notesLen`). This
         /// assumes all notes should fit perfectly within the beat.
         /// @param division
         /// @return `true` if this beat now represents a valid beat, `false` otherwise.
-        bool set_note_ratios(unsigned int division);
+        bool set_note_values(unsigned int division);
 
         /// @brief Determines the most-likely to occur note ratios based on `division`.
         /// @note This is for when the notes are known to not fit perfectly in the beat, and that
         /// the beat should have a tail.
         /// @param division
         /// @return `true` if this beat now represents a valid offbeat, `false` otherwise.
-        bool set_offbeat_note_ratios(unsigned int division);
+        bool set_offbeat_note_values(unsigned int division);
 
-        /// @brief Determines the most-likely to occur note ratios based on `division` and
-        /// `baseDuration`.
+        /// @brief Determines the most-likely to occur note values based on `baseDuration`.
         /// @note Only use this when constraints have been set (`notes` and `notesLen`).
-        /// @param division Division of the beat.
         /// @param baseDuration Duration (in seconds) of `beat duration / division`.
-        inline void set_note_ratios(unsigned int division, float baseDuration)
+        inline void set_note_values(float baseDuration)
         {
             /// Reset division stuff
             this->division.antecedent = 0;
@@ -321,12 +291,13 @@ namespace RhythmTranscriber
 
             for (unsigned int i = 0; i < notesLen; i++)
             {
-                float noteDivision = (notes + i)->duration / baseDuration;
+                float noteDivision = notes[i].duration / baseDuration;
 
                 /// Multiplier should be at least 1.
                 unsigned int multiplier = std::round(noteDivision) + (noteDivision < 0.5f);
 
-                noteRatios[i] = NoteRatio{multiplier, division, noteDivision};
+                /* noteValues[i] = NoteRatio{multiplier, division, noteDivision}; */
+                noteValues[i] = multiplier;
 
                 this->division.antecedent += multiplier;
 
@@ -336,7 +307,7 @@ namespace RhythmTranscriber
 
         /// @brief Recalculates each `noteRatio`'s `partial` value. Since it's dependent on beat
         /// duration, this should be done after all notes have been added.
-        void calc_note_partials();
+        /* void calc_note_partials(); */
 
         float calc_score();
 
@@ -353,17 +324,17 @@ namespace RhythmTranscriber
         /// @return
         inline bool end_is_valid()
         {
-            return (notesLen < 2 || division.antecedent - noteRatios[notesLen - 1].antecedent <
-                                        division.consequent);
+            return (notesLen < 2 ||
+                    division.antecedent - noteValues[notesLen - 1] < division.consequent);
         }
 
-        std::vector<Beat> get_trailing_beats();
+        float note_dist_sd();
 
         std::string str();
 
     private:
         float partialSum = 0.f;
 
-        void transform_note_ratios(float ratio);
+        void transform_note_values(float ratio);
     };
 }
