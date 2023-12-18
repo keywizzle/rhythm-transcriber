@@ -42,7 +42,7 @@ namespace RhythmTranscriber
 
             std::vector<BaseNote> notes;
 
-            std::vector<BaseRatio> noteRatios;
+            std::vector<Ratio> noteRatios;
 
             TestSource() {}
 
@@ -64,7 +64,7 @@ namespace RhythmTranscriber
 
                     notes.push_back(BaseNote{note.timestamp, transcription.notes[i + 1].timestamp -
                                                                  note.timestamp});
-                    noteRatios.push_back(BaseRatio{note.rhythm.beats, note.rhythm.notes});
+                    noteRatios.push_back(Ratio{note.rhythm.beats, note.rhythm.notes});
                 }
             }
 
@@ -115,7 +115,7 @@ namespace RhythmTranscriber
                     std::cout << "- Expected beats:\n";
                     for (unsigned int i = 0; i < expectedBranch.length; i++)
                     {
-                        expectedBranch.beatBuffer[i].calc_note_partials();
+                        /* expectedBranch.beatBuffer[i].calc_note_partials(); */
                         expectedBranch.beatBuffer[i].calc_score();
                         std::cout << "\t" << expectedBranch.beatBuffer[i].str() << '\n';
                     }
@@ -218,7 +218,7 @@ namespace RhythmTranscriber
                     std::cout << "- Expected beats:\n";
                     for (unsigned int i = 0; i < expectedBranch.length; i++)
                     {
-                        expectedBranch.beatBuffer[i].calc_note_partials();
+                        /* expectedBranch.beatBuffer[i].calc_note_partials(); */
                         expectedBranch.beatBuffer[i].calc_score();
                         std::cout << "\t" << expectedBranch.beatBuffer[i].str() << '\n';
 
@@ -227,8 +227,8 @@ namespace RhythmTranscriber
                         float distWeightSum = 0.f;
                         for (unsigned int j = 0; j < beat.notesLen; j++)
                         {
-                            float baseDuration = beat.noteRatios[j].antecedent *
-                                                 ((60.f / bpm) / beat.division.consequent);
+                            float baseDuration =
+                                beat.noteValues[j] * ((60.f / bpm) / beat.division.consequent);
 
                             float scoreBase = beat.notes[j].duration / baseDuration;
 
@@ -262,8 +262,8 @@ namespace RhythmTranscriber
                         float distWeightSum = 0.f;
                         for (unsigned int j = 0; j < beat.notesLen; j++)
                         {
-                            float baseDuration = beat.noteRatios[j].antecedent *
-                                                 ((60.f / bpm) / beat.division.consequent);
+                            float baseDuration =
+                                beat.noteValues[j] * ((60.f / bpm) / beat.division.consequent);
 
                             float scoreBase = beat.notes[j].duration / baseDuration;
 
@@ -320,9 +320,9 @@ namespace RhythmTranscriber
 
                 for (unsigned int i = noteIndex; i < notes.size(); i++)
                 {
-                    auto noteRatio = NoteRatio{noteRatios[i].antecedent, noteRatios[i].consequent};
+                    auto noteRatio = Ratio{noteRatios[i].antecedent, noteRatios[i].consequent};
 
-                    beat.add_note(NoteRatio{noteRatios[i].antecedent, noteRatios[i].consequent});
+                    beat.add_note(Ratio{noteRatios[i].antecedent, noteRatios[i].consequent});
 
                     /* std::cout << "beat after adding " << noteRatio.antecedent << "/"
                               << noteRatio.consequent << ": " << beat.str() << '\n'; */
@@ -435,12 +435,12 @@ namespace RhythmTranscriber
                 {
                     /// Note ratio consequents may be removed eventually, so we're using the
                     /// consequent of division instead.
-                    auto expectedRatio = NoteRatio{expectedBeat.noteRatios[i].antecedent,
-                                                   expectedBeat.division.consequent};
+                    auto expectedRatio =
+                        Ratio{expectedBeat.noteValues[i], expectedBeat.division.consequent};
                     expectedRatio.simplify();
 
-                    auto actualRatio = NoteRatio{actualBeat.noteRatios[i].antecedent,
-                                                 actualBeat.division.consequent};
+                    auto actualRatio =
+                        Ratio{actualBeat.noteValues[i], actualBeat.division.consequent};
                     actualRatio.simplify();
 
                     if (expectedRatio.antecedent != actualRatio.antecedent ||
@@ -532,7 +532,7 @@ namespace RhythmTranscriber
             testSource.test_branch_scores(0U, 6U, 164.f);
             testSource.test_branch_scores(0U, 7U, 164.f);
             testSource.test_branch_scores(0U, 8U, 164.f);
-            testSource.test_branch_scores(13U, 6U, 164.f);
+            testSource.test_branch_scores(13U, 8U, 164.f);
 
             /// These two should pass some time in the future, they are currently expected to fail.
             /* testSource.test_branch_scores(38U, 3U, 164.f);
@@ -566,13 +566,19 @@ namespace RhythmTranscriber
 
             BeatAnalyzer beatAnalyzer;
 
-            beatAnalyzer.set_depth(8);
+            beatAnalyzer.set_depth(depth);
             beatAnalyzer.set_bpm(bpm);
 
             beatAnalyzer.notes = &(testSource.notes[0]);
             beatAnalyzer.notesLen = testSource.notes.size();
 
-            beatAnalyzer.get_best_branch_at(0);
+            beatAnalyzer.get_best_branch_at(startNoteIndex);
+
+            std::cout << "best branch: " << beatAnalyzer.bestBranch.str() << '\n';
+
+            beatAnalyzer.branch = beatAnalyzer.bestBranch;
+
+            std::cout << "score: " << beatAnalyzer.calc_branch_score() << '\n';
 
             StopTimer(false);
 
@@ -598,6 +604,81 @@ namespace RhythmTranscriber
 
     void run_benchmarks()
     {
+        auto testSource = TestSource("rhythm X 2022");
+        BeatAnalyzer beatAnalyzer;
+        beatAnalyzer.set_depth(8);
+        beatAnalyzer.set_bpm(164.f);
+        beatAnalyzer.notes = &(testSource.notes[0]);
+        beatAnalyzer.notesLen = testSource.notes.size();
+
+        /* beatAnalyzer.get_best_branch_at(0);
+        std::cout << "branch: \n" << beatAnalyzer.bestBranch.str() << '\n';
+        std::cout << "score: " << beatAnalyzer.bestBranchScore << '\n'; */
+
+        /* Beat beat = Beat(&(testSource.notes[23]), 6);
+        beat.subBeatCount = 2;
+        beat.set_note_ratios(12U);
+        beat.calc_score();
+        std::cout << "beat: " << beat.str() << '\n';
+        return; */
+
+        beatAnalyzer.branch.dataBuffer[0] = BeatData{beatAnalyzer.notes, 4, false, false};
+        beatAnalyzer.branch.dataBuffer[1] = BeatData{beatAnalyzer.notes + 4, 5, false, false};
+        beatAnalyzer.branch.dataBuffer[2] = BeatData{beatAnalyzer.notes + 9, 4, false, false};
+        beatAnalyzer.branch.dataBuffer[3] = BeatData{beatAnalyzer.notes + 13, 6, false, false};
+        beatAnalyzer.branch.dataBuffer[4] = BeatData{beatAnalyzer.notes + 19, 4, false, false};
+        beatAnalyzer.branch.dataBuffer[5] = BeatData{beatAnalyzer.notes + 23, 5, false, true};
+        beatAnalyzer.branch.dataBuffer[6] = BeatData{beatAnalyzer.notes + 28, 1, true, false};
+        beatAnalyzer.branch.dataBuffer[7] = BeatData{beatAnalyzer.notes + 29, 3, false, false};
+
+        /* beatAnalyzer.branch.dataBuffer[0] = BeatData{beatAnalyzer.notes, 4, false, false};
+        beatAnalyzer.branch.dataBuffer[1] = BeatData{beatAnalyzer.notes + 4, 4, false, false};
+        beatAnalyzer.branch.dataBuffer[2] = BeatData{beatAnalyzer.notes + 8, 5, false, true};
+        beatAnalyzer.branch.dataBuffer[3] = BeatData{beatAnalyzer.notes + 13, 5, true, false};
+        beatAnalyzer.branch.dataBuffer[4] = BeatData{beatAnalyzer.notes + 18, 4, false, false};
+        beatAnalyzer.branch.dataBuffer[5] = BeatData{beatAnalyzer.notes + 22, 6, false, true};
+        beatAnalyzer.branch.dataBuffer[6] = BeatData{beatAnalyzer.notes + 28, 1, true, false};
+        beatAnalyzer.branch.dataBuffer[7] = BeatData{beatAnalyzer.notes + 29, 3, false, false}; */
+
+        beatAnalyzer.branch.create_beats();
+        std::cout << "branch: " << beatAnalyzer.branch.str() << '\n';
+        std::cout << "score: " << beatAnalyzer.calc_branch_score() << '\n';
+
+        for (unsigned int i = 0; i < beatAnalyzer.branch.length; i++)
+        {
+            beatAnalyzer.branch.beatBuffer[i].calc_score();
+            std::cout << "(" << i
+                      << ") beat dist sd: " << beatAnalyzer.branch.beatBuffer[i].note_dist_sd()
+                      << '\n';
+        }
+
+        float beatScoreSum = 0.f;
+
+        float distScoreSum = 0.f;
+
+        for (unsigned int i = 0; i < beatAnalyzer.branch.length; i++)
+        {
+            beatScoreSum += beatAnalyzer.branch.beatBuffer[i].score;
+
+            float beatDuration = beatAnalyzer.branch.beatBuffer[i].get_duration();
+            float baseDuration =
+                beatDuration / beatAnalyzer.branch.beatBuffer[i].division.antecedent;
+
+            /// Dist score
+            float durationDistScore =
+                1 - (beatDuration < beatAnalyzer.branch.expectedBeatDuration
+                         ? beatDuration / beatAnalyzer.branch.expectedBeatDuration
+                         : beatAnalyzer.branch.expectedBeatDuration / beatDuration);
+
+            distScoreSum += 1.f * (0.0625f / (durationDistScore * durationDistScore + 0.0625f));
+        }
+        std::cout << "average beat score: "
+                  << std::to_string(beatScoreSum / beatAnalyzer.branch.length) << '\n';
+        std::cout << "average duration dist score: "
+                  << std::to_string(distScoreSum / beatAnalyzer.branch.length) << '\n';
+
+        return;
+
         LONGLONG totalTime = 0;
 
         /// Default compile options, compiled to executable and run externally.
