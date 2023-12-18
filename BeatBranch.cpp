@@ -118,42 +118,30 @@ namespace RhythmTranscriber
     bool BeatBranch::create_beats_at(unsigned int beatIndex, unsigned int beatLength,
                                      unsigned int noteLength)
     {
+        /* if (beatLength > 1)
+        {
+            std::cout << "noteLength: " << noteLength << '\n';
+        } */
         Beat beat = Beat(dataBuffer[beatIndex].notes, noteLength);
+        beat.subBeatCount = beatLength;
 
         float bestScore = 0.f;
         float beatScore;
 
         for (unsigned int i = 0; i <= divisionDepth; i++)
         {
-            /// Multiplying the division by `beatLength` will allow us to use a single beat instance
-            /// to score multiple beats (that don't start/end on beat) as one. This has it's
-            /// issues, but for right now it seems to work alright doing it this way instead of
-            /// trying to separate them and deal with offbeat beats individually.
-
-            /// Any division that would normally be possible for a single beat will be 1:1 to
-            /// multiple beats, just as multiples. For example, if 9 is a possible division
-            /// normally and `beatLength` is 2, 9 will become 18, and 9 will not be tested.
-
-            auto division = beatDivisions[i] * beatLength;
-
-            if (division < noteLength)
+            if (beatDivisions[i] * beatLength < noteLength)
             {
                 /// The beat will not be able to represent a division lower than `noteLength`.
                 /// Example: representing 5 notes in a beat as sixteenth notes isn't possible.
                 continue;
             }
 
-            if (!beat.set_note_ratios(division))
+            if (!beat.set_note_values(beatDivisions[i]))
             {
                 /// Weren't able to correctly set note ratios based off of `division`.
                 continue;
             }
-
-            /// Since we may be using the beat as a combination of multiple beats, to get accurate
-            /// scores we need to modify the division to be what it *would* be when the beats are
-            /// split out, which will cause note ratios to add up to be `beatLength` beats. This is
-            /// essentially reversing the multiplication of the division done earlier.
-            beat.division.consequent /= beatLength;
 
             /// We should really be scoring the expanded beat instead, but this seems to work for
             /// the most part.
@@ -163,13 +151,19 @@ namespace RhythmTranscriber
             {
                 /// Add tiny amount to prevent a beat with an equal score overriding this one due to
                 /// floating point comparison issues.
-                bestScore = beatScore + 0.000001f;
+                bestScore = beatScore + 0.0001f;
 
                 /// Copy to buffer at startIndex. If our beat is actually a "multi-beat", we will
                 /// expand it to fill the buffer accordingly a little later.
                 beatBuffer[beatIndex] = beat;
             }
         }
+        /* if (beatLength > 1)
+        {
+            std::cout << "best score: " << bestScore << '\n';
+            std::cout << "best beat: " << beatBuffer[beatIndex].str() << '\n';
+            std::cout << "beat notes len: " << beatBuffer[beatIndex].notesLen << '\n';
+        } */
 
         if (bestScore == 0.f)
         {
@@ -191,6 +185,7 @@ namespace RhythmTranscriber
         /// @todo Combine into a single `create_beats_at` method.
 
         Beat beat = Beat(dataBuffer[beatIndex].notes, noteLength, effectiveBeatDuration);
+        beat.subBeatCount = beatLength;
 
         float bestScore = 0.f;
         float beatScore;
@@ -206,16 +201,16 @@ namespace RhythmTranscriber
             /// multiple beats, just as multiples. For example, if 9 is a possible division
             /// normally and `beatLength` is 2, 9 will become 18, and 9 will not be tested.
 
-            auto division = beatDivisions[i] * beatLength;
+            /* auto division = beatDivisions[i] * beatLength; */
 
-            if (division < noteLength)
+            if (beatDivisions[i] < noteLength)
             {
                 /// The beat will not be able to represent a division lower than `noteLength`.
                 /// Example: representing 5 notes in a beat as sixteenth notes isn't possible.
                 continue;
             }
 
-            if (!beat.set_offbeat_note_ratios(division))
+            if (!beat.set_offbeat_note_values(beatDivisions[i]))
             {
                 /// Weren't able to correctly set note ratios based off of `division`.
                 continue;
@@ -225,7 +220,7 @@ namespace RhythmTranscriber
             /// scores we need to modify the division to be what it *would* be when the beats are
             /// split out, which will cause note ratios to add up to be `beatLength` beats. This is
             /// essentially reversing the multiplication of the division done earlier.
-            beat.division.consequent /= beatLength;
+            /* beat.division.consequent /= beatLength; */
 
             beatScore = beat.calc_score();
 
@@ -284,11 +279,11 @@ namespace RhythmTranscriber
             /// The note ratios still have the consequent as beatLength * division, so fix it here
             /// before adding.
             beatBuffer[beatIndex].add_note(
-                NoteRatio{multiBeat.noteRatios[i].antecedent, multiBeat.division.consequent});
+                Ratio{multiBeat.noteValues[i], multiBeat.division.consequent});
 
             if (beatBuffer[beatIndex].division.antecedent >= consequent)
             {
-                beatBuffer[beatIndex].calc_note_partials();
+                /* beatBuffer[beatIndex].calc_note_partials(); */
                 beatBuffer[beatIndex].calc_score();
 
                 beatIndex++;
