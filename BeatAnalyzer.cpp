@@ -275,13 +275,19 @@ namespace RhythmTranscriber
                     beatWeight += 0.75f; */
                     if (durationDiff < 0.01f)
                     {
+                        /* std::cout << "neighbor beat duration score: "
+                                  << std::to_string(
+                                         (0.75f *
+                                          (1 - 0.0001f / (durationDiff * durationDiff + 0.0001f))) /
+                                         0.75f)
+                                  << '\n'; */
                         beatScore +=
                             0.75f * (1 - 0.0001f / (durationDiff * durationDiff + 0.0001f));
                         beatWeight += 0.75f;
                     }
                 }
             }
-            else if (recentBestBeat.endTime == branch.beatBuffer[i].startTime)
+            else if (recentBestBeat.endTime == branch.beatBuffer[0].startTime)
             {
                 /// @todo Cleanup, use a single function for this to avoid repetition.
 

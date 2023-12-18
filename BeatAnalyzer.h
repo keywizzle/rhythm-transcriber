@@ -27,6 +27,8 @@ namespace RhythmTranscriber
         BeatBranch bestBranch;
         float bestBranchScore = 0.f;
 
+        Beat bestBeat;
+
         void set_bpm(float bpm);
 
         void set_depth(unsigned int depth);
