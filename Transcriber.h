@@ -40,9 +40,9 @@ namespace RhythmTranscriber
 
                 /// @todo Simplify note ratio before adding to transcription.
 
-                note.rhythm = Transcription::NoteRhythm{
-                    .notes = (unsigned short)beat.division.consequent,
-                    .beats = (unsigned short)beat.noteRatios[j].antecedent};
+                note.rhythm =
+                    Transcription::NoteRhythm{.notes = (unsigned short)beat.division.consequent,
+                                              .beats = (unsigned short)beat.noteValues[j]};
 
                 note.placement = Transcription::NotePlacement::PLACEMENT_HEAD;
 
